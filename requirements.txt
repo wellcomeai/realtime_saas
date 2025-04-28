@@ -1,42 +1,42 @@
 # Python dependencies for WellcomeAI SaaS Voice Assistant
 
 # Core Web Framework
-fastapi==0.109.0
-uvicorn==0.24.0
+fastapi==0.95.2
+starlette==0.26.1
+uvicorn==0.22.0
 
 # WebSocket and HTTP Client
-websockets==12.0
-httpx==0.26.0
+websockets==11.0.3
+httpx==0.24.1
 
 # Authentication and Security
 python-jose[cryptography]==3.3.0
 python-dotenv==1.0.0
 passlib==1.7.4
-python-multipart==0.0.9
+python-multipart==0.0.6
 
 # Database and ORM
-supabase==2.2.0
+supabase==1.0.4
 
 # Google Services
-google-auth==2.27.0
-google-auth-oauthlib==1.2.0
-google-auth-httplib2==0.2.0
-google-api-python-client==2.123.0
+google-auth==2.19.1
+google-auth-oauthlib==1.0.0
+google-auth-httplib2==0.1.0
+google-api-python-client==2.88.0
 
 # JWT Token Handling
-PyJWT==2.8.0
+PyJWT==2.7.0
 
 # Logging
-loguru==0.7.2
+loguru==0.7.0
 
 # Optional: for additional functionality
-pydantic==2.6.4
-typing-extensions==4.10.0
+pydantic==1.10.9
+typing-extensions==4.6.3
 
 # Deployment and Production
-gunicorn==21.2.0
-starlette==0.36.3
+gunicorn==20.1.0
 
 # Additional HTTP and Security
 requests==2.31.0
-cryptography==42.0.5
+cryptography==41.0.1
