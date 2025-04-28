@@ -9,7 +9,7 @@ websockets==12.0
 httpx==0.26.0
 
 # Authentication and Security
-python-jose==3.3.0
+python-jose[cryptography]==3.3.0
 python-dotenv==1.0.0
 passlib==1.7.4
 python-multipart==0.0.9
@@ -23,15 +23,11 @@ google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
 google-api-python-client==2.123.0
 
-# Audio and Voice Processing
-sounddevice==0.4.6
-numpy==1.26.4
-
 # JWT Token Handling
 PyJWT==2.8.0
 
-# Logging and Development
-logging==0.5.1.2
+# Logging
+loguru==0.7.2
 
 # Optional: for additional functionality
 pydantic==2.6.4
@@ -41,5 +37,6 @@ typing-extensions==4.10.0
 gunicorn==21.2.0
 starlette==0.36.3
 
-# CORS Handling
-python-jose==3.3.0
+# Additional HTTP and Security
+requests==2.31.0
+cryptography==42.0.5
