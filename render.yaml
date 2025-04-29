@@ -3,7 +3,7 @@ services:
     name: wellcomeai
     env: python
     region: frankfurt  # Выберите регион, наиболее близкий к вашим пользователям
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r server/requirements.txt
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:$PORT main:app
     envVars:
       - key: PYTHON_VERSION
