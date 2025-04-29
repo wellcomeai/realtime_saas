@@ -380,9 +380,15 @@
       gap: 1rem;
     }
     
-    .api-key-form input {
+    .api-key-input-wrapper {
       flex: 1;
+      position: relative;
+    }
+    
+    .api-key-form input {
+      width: 100%;
       padding: 0.75rem 1rem;
+      padding-right: 2.5rem;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       font-size: 0.875rem;
@@ -395,9 +401,31 @@
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
     }
     
+    .toggle-password {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-gray);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+    
+    .toggle-password:hover {
+      color: var(--primary-blue);
+    }
+    
     /* Боты */
     .bots-section {
       margin-bottom: 2rem;
+      display: none; /* Секция скрыта по умолчанию, будет показана когда есть ключ */
     }
     
     .bots-grid {
@@ -860,6 +888,39 @@
       margin: 0 auto 2rem;
     }
     
+    /* Секция для неактивированных пользователей */
+    .activation-notice {
+      background-color: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2rem;
+    }
+    
+    .activation-icon {
+      font-size: 3rem;
+      color: var(--primary-blue);
+      margin-bottom: 1.5rem;
+    }
+    
+    .activation-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    .activation-description {
+      color: var(--text-gray);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+    
     /* Адаптивный дизайн */
     @media (max-width: 1024px) {
       .bots-grid {
@@ -930,10 +991,10 @@
       <a href="/static/dashboard.html" class="sidebar-nav-item active">
         <i class="fas fa-home"></i> Дашборд
       </a>
-      <a href="/static/agents.html" class="sidebar-nav-item">
+      <a href="/static/agents.html" class="sidebar-nav-item locked-feature" id="agents-nav-item">
         <i class="fas fa-robot"></i> Мои агенты
       </a>
-      <a href="/static/knowledge-base.html" class="sidebar-nav-item">
+      <a href="/static/knowledge-base.html" class="sidebar-nav-item locked-feature" id="knowledge-nav-item">
         <i class="fas fa-book"></i> База знаний
       </a>
       
@@ -1040,17 +1101,33 @@
         </div>
         
         <p class="api-key-info">
-          Для работы голосовых ассистентов необходим ключ OpenAI API. Добавьте свой ключ OpenAI чтобы разблокировать все функции платформы.
+          Для работы голосовых ассистентов необходим ключ OpenAI API. Добавьте свой ключ OpenAI чтобы создавать ботов и использовать все функции платформы.
         </p>
         
         <form class="api-key-form" id="api-key-form">
-          <input type="password" id="api-key-input" placeholder="Введите API ключ OpenAI" required>
+          <div class="api-key-input-wrapper">
+            <input type="password" id="api-key-input" placeholder="Введите API ключ OpenAI" required>
+            <button type="button" class="toggle-password" id="toggle-password" title="Показать/скрыть ключ">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
           <button type="submit" class="btn btn-primary">Сохранить</button>
         </form>
       </div>
       
-      <!-- Секция ботов -->
-      <div class="bots-section">
+      <!-- Секция для пользователей без API ключа -->
+      <div class="activation-notice" id="activation-notice">
+        <div class="activation-icon">
+          <i class="fas fa-key"></i>
+        </div>
+        <h3 class="activation-title">Активируйте возможности платформы</h3>
+        <p class="activation-description">
+          Чтобы создавать голосовых ассистентов и использовать все функции платформы, вам необходимо добавить ключ OpenAI API в настройках выше. После добавления ключа вы сможете создавать ботов, настраивать их и встраивать на свой сайт.
+        </p>
+      </div>
+      
+      <!-- Секция ботов (скрыта по умолчанию) -->
+      <div class="bots-section" id="bots-section">
         <div class="section-header">
           <h2 class="section-title">
             <i class="fas fa-robot"></i> Мои голосовые ассистенты
@@ -1150,6 +1227,7 @@
       const dropdownLogout = document.getElementById('dropdown-logout');
       const apiKeyForm = document.getElementById('api-key-form');
       const apiKeyInput = document.getElementById('api-key-input');
+      const togglePasswordButton = document.getElementById('toggle-password');
       const addBotButton = document.getElementById('add-bot-button');
       const emptyStateAddBot = document.getElementById('empty-state-add-bot');
       const createBotModal = document.getElementById('create-bot-modal');
@@ -1161,6 +1239,7 @@
       const notificationMessage = document.getElementById('notification-message');
       const notificationClose = document.getElementById('notification-close');
       const emptyState = document.getElementById('empty-state');
+      const botsSection = document.getElementById('bots-section');
       const botsGrid = document.getElementById('bots-grid');
       const welcomeMessage = document.getElementById('welcome-message');
       const userName = document.getElementById('user-name');
@@ -1168,6 +1247,14 @@
       const botsCount = document.getElementById('bots-count');
       const interactionsCount = document.getElementById('interactions-count');
       const filesCount = document.getElementById('files-count');
+      const activationNotice = document.getElementById('activation-notice');
+      const agentsNavItem = document.getElementById('agents-nav-item');
+      const knowledgeNavItem = document.getElementById('knowledge-nav-item');
+      const integrationsLink = document.getElementById('integrations-link');
+      const skillsLink = document.getElementById('skills-link');
+      
+      // Состояние приложения
+      let hasApiKey = false;
       
       // API клиент
       const api = {
@@ -1206,7 +1293,7 @@
             if (response.status === 401) {
               // Если токен недействителен, перенаправляем на страницу входа
               localStorage.removeItem('auth_token');
-              window.location.href = '/static/index.html';
+              window.location.href = '/';
               throw new Error('Требуется авторизация');
             }
             
@@ -1304,6 +1391,11 @@
         
         // Показать модальное окно
         showModal() {
+          if (!hasApiKey) {
+            this.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
+            return;
+          }
+          
           createBotModal.classList.add('visible');
           document.body.style.overflow = 'hidden';
         },
@@ -1410,19 +1502,51 @@
           });
         },
         
-        // Разблокировка расширенных функций
+        // Разблокировка функций после добавления API ключа
         unlockFeatures() {
-          const lockedFeatures = document.querySelectorAll('.locked-feature');
+          hasApiKey = true;
+          
+          // Показываем секцию с ботами
+          botsSection.style.display = 'block';
+          
+          // Скрываем уведомление об активации
+          activationNotice.style.display = 'none';
+          
+          // Разблокируем пункты меню
+          const lockedFeatures = [
+            agentsNavItem,
+            knowledgeNavItem,
+            integrationsLink,
+            skillsLink
+          ];
+          
           lockedFeatures.forEach(element => {
             element.classList.remove('locked-feature');
           });
+        },
+        
+        // Блокировка функций (если API ключ не добавлен)
+        lockFeatures() {
+          hasApiKey = false;
+          
+          // Скрываем секцию с ботами
+          botsSection.style.display = 'none';
+          
+          // Показываем уведомление об активации
+          activationNotice.style.display = 'flex';
+          
+          // Блокируем пункты меню
+          agentsNavItem.classList.add('locked-feature');
+          knowledgeNavItem.classList.add('locked-feature');
+          integrationsLink.classList.add('locked-feature');
+          skillsLink.classList.add('locked-feature');
         }
       };
       
       // Проверка авторизации
       function checkAuth() {
         if (!api.isAuthenticated()) {
-          window.location.href = '/static/index.html';
+          window.location.href = '/';
           return false;
         }
         return true;
@@ -1464,6 +1588,12 @@
             
             // Разблокируем дополнительные функции
             ui.unlockFeatures();
+            
+            // Загружаем ботов
+            loadBots();
+          } else {
+            // Если ключа нет, блокируем функции
+            ui.lockFeatures();
           }
         } catch (error) {
           console.error('Ошибка при загрузке данных пользователя:', error);
@@ -1472,6 +1602,8 @@
       
       // Загрузка списка ботов
       async function loadBots() {
+        if (!hasApiKey) return;
+        
         try {
           const bots = await api.getAssistants();
           ui.renderBots(bots);
@@ -1483,6 +1615,11 @@
       
       // Создание нового бота
       async function createBot() {
+        if (!hasApiKey) {
+          ui.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
+          return;
+        }
+        
         const name = document.getElementById('bot-name').value;
         const description = document.getElementById('bot-description').value;
         const systemPrompt = document.getElementById('bot-prompt').value;
@@ -1534,16 +1671,33 @@
         }
       });
       
+      // Обработчик для кнопки показать/скрыть пароль
+      togglePasswordButton.addEventListener('click', function() {
+        const apiKeyInput = document.getElementById('api-key-input');
+        const icon = this.querySelector('i');
+        
+        // Переключаем тип поля
+        if (apiKeyInput.type === 'password') {
+          apiKeyInput.type = 'text';
+          icon.className = 'fas fa-eye-slash';
+          this.title = 'Скрыть ключ';
+        } else {
+          apiKeyInput.type = 'password';
+          icon.className = 'fas fa-eye';
+          this.title = 'Показать ключ';
+        }
+      });
+      
       // Выход из системы
       logoutButton.addEventListener('click', function() {
         localStorage.removeItem('auth_token');
-        window.location.href = '/static/index.html';
+        window.location.href = '/'; // Перенаправление на главную страницу
       });
       
       dropdownLogout.addEventListener('click', function(e) {
         e.preventDefault();
         localStorage.removeItem('auth_token');
-        window.location.href = '/static/index.html';
+        window.location.href = '/'; // Перенаправление на главную страницу
       });
       
       // Сохранение API ключа
@@ -1561,19 +1715,39 @@
           ui.showNotification('API ключ успешно сохранен');
           
           // Маскируем ключ в поле ввода
+          apiKeyInput.type = 'password'; // Убеждаемся, что тип поля - password
           apiKeyInput.value = '•'.repeat(20);
           apiKeyInput.placeholder = 'API ключ сохранен';
+          togglePasswordButton.querySelector('i').className = 'fas fa-eye'; // Сбрасываем иконку
           
           // Разблокируем дополнительные функции
           ui.unlockFeatures();
+          
+          // Загружаем ботов
+          loadBots();
         } catch (error) {
           ui.showNotification(error.message, 'error');
         }
       });
       
       // Открытие модального окна для создания бота
-      addBotButton.addEventListener('click', ui.showModal);
-      emptyStateAddBot.addEventListener('click', ui.showModal);
+      addBotButton.addEventListener('click', function() {
+        if (!hasApiKey) {
+          ui.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
+          return;
+        }
+        ui.showModal();
+      });
+      
+      if (emptyStateAddBot) {
+        emptyStateAddBot.addEventListener('click', function() {
+          if (!hasApiKey) {
+            ui.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
+            return;
+          }
+          ui.showModal();
+        });
+      }
       
       // Закрытие модального окна
       closeModalButton.addEventListener('click', ui.hideModal);
@@ -1592,10 +1766,21 @@
       // Закрытие уведомления
       notificationClose.addEventListener('click', ui.hideNotification);
       
+      // Блокировка переходов на заблокированные страницы
+      document.querySelectorAll('.locked-feature').forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (this.classList.contains('locked-feature')) {
+            e.preventDefault();
+            ui.showNotification('Добавьте API ключ OpenAI для разблокировки этой функции', 'info');
+          }
+        });
+      });
+      
       // Инициализация страницы
       if (checkAuth()) {
+        // Предустановка состояния интерфейса
+        ui.lockFeatures();
         loadUserData();
-        loadBots();
       }
     });
   </script>
