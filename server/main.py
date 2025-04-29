@@ -1375,17 +1375,15 @@ async def widget_page():
         )
 
 # Импортируем скрипт миграции
-from db_migration import migrate_database
-
+try:
+    from db_migration import migrate_database
+except ImportError:
+    logger.warning("Модуль миграции базы данных не найден, пропускаем миграцию")
+    
 # Событие при запуске приложения
 @app.on_event("startup")
 async def startup_event():
     create_tables()
-    # Запускаем миграцию базы данных
-    try:
-        migrate_database(engine)
-    except Exception as e:
-        logger.error(f"Ошибка при миграции базы данных: {str(e)}")
 
 # Запуск приложения с uvicorn при запуске файла напрямую
 if __name__ == "__main__":
