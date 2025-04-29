@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Управление агентом | Live VoiceAI</title>
+  <title>Мои агенты | Live VoiceAI</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     /* Основные стили */
@@ -163,6 +163,7 @@
       align-items: center;
       gap: 0.5rem;
       border: none;
+      text-decoration: none;
     }
     
     .btn-primary {
@@ -197,6 +198,271 @@
     .content-container {
       padding: 2rem;
       flex-grow: 1;
+    }
+    
+    /* Хлебные крошки */
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-gray);
+      font-size: 0.875rem;
+    }
+    
+    .breadcrumb-item {
+      display: flex;
+      align-items: center;
+    }
+    
+    .breadcrumb-item a {
+      color: var(--text-gray);
+      text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+      color: var(--primary-blue);
+    }
+    
+    .breadcrumb-separator {
+      margin: 0 0.25rem;
+    }
+    
+    /* Список ботов */
+    .bots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .bot-card {
+      background-color: var(--white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .bot-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .bot-header {
+      background-color: var(--bg-blue-light);
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .bot-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4a86e8, #2563eb);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--white);
+      font-size: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .bot-menu-button {
+      background: none;
+      border: none;
+      color: var(--text-gray);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: var(--radius-md);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .bot-menu-button:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-dark);
+    }
+    
+    .bot-info {
+      padding: 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .bot-name {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .bot-description {
+      color: var(--text-gray);
+      font-size: 0.875rem;
+      margin-bottom: 1.25rem;
+      flex: 1;
+    }
+    
+    .bot-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-gray);
+      margin-bottom: 1.25rem;
+    }
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .status-active {
+      background-color: #10b981;
+    }
+    
+    .status-inactive {
+      background-color: #ef4444;
+    }
+    
+    .bot-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    .bot-action-btn {
+      flex: 1;
+      padding: 0.6rem 0.75rem;
+      text-align: center;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    
+    .action-configure {
+      background-color: var(--bg-blue-light);
+      color: var(--primary-blue);
+      border: 1px solid var(--primary-blue-light);
+    }
+    
+    .action-configure:hover {
+      background-color: var(--primary-blue-light);
+      color: var(--white);
+    }
+    
+    .action-embed {
+      background-color: var(--bg-light);
+      color: var(--text-gray);
+      border: 1px solid var(--border-color);
+    }
+    
+    .action-embed:hover {
+      background-color: var(--text-light);
+      color: var(--white);
+      border-color: var(--text-light);
+    }
+    
+    .add-bot-card {
+      background-color: var(--white);
+      border-radius: var(--radius-lg);
+      border: 2px dashed var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      height: 100%;
+      min-height: 250px;
+    }
+    
+    .add-bot-card:hover {
+      background-color: var(--bg-blue-light);
+      border-color: var(--primary-blue-light);
+    }
+    
+    .add-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background-color: var(--bg-blue-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--primary-blue);
+      font-size: 2rem;
+      margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+    }
+    
+    .add-bot-card:hover .add-icon {
+      background-color: var(--white);
+      transform: scale(1.1);
+    }
+    
+    .add-bot-text {
+      font-weight: 600;
+      color: var(--text-gray);
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .add-bot-card:hover .add-bot-text {
+      color: var(--primary-blue);
+    }
+    
+    .add-bot-subtext {
+      color: var(--text-light);
+      font-size: 0.875rem;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    
+    /* Пустое состояние */
+    .empty-state {
+      background-color: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      padding: 3rem 2rem;
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    
+    .empty-icon {
+      font-size: 3rem;
+      color: var(--text-light);
+      margin-bottom: 1.5rem;
+    }
+    
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    
+    .empty-description {
+      color: var(--text-gray);
+      max-width: 500px;
+      margin: 0 auto 2rem;
     }
     
     /* Табы */
@@ -305,6 +571,89 @@
       margin: 0;
     }
     
+    /* Модальное окно для создания бота */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(15, 23, 42, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: all 0.3s;
+    }
+    
+    .modal-overlay.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .modal-content {
+      background-color: var(--white);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 550px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-20px);
+      transition: transform 0.3s;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-overlay.visible .modal-content {
+      transform: translateY(0);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      color: var(--text-gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .modal-close:hover {
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+    }
+    
+    .modal-body {
+      padding: 1.5rem;
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+    
     /* Уведомление */
     .notification {
       position: fixed;
@@ -369,72 +718,42 @@
       font-size: 1.125rem;
     }
     
-    /* Встраивание */
-    .embed-container {
-      background-color: var(--bg-light);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 1rem;
-      margin-top: 1rem;
+    /* Адаптивный дизайн */
+    @media (max-width: 1024px) {
+      .bots-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
     }
     
-    .embed-code {
-      background-color: var(--white);
-      border-radius: var(--radius-md);
-      padding: 1rem;
-      margin-top: 0.5rem;
-      font-family: monospace;
-      white-space: pre-wrap;
-      user-select: all;
-      overflow-x: auto;
-    }
-    
-    .embed-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 1rem;
-    }
-    
-    /* Статистика */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-      background-color: var(--white);
-      border-radius: var(--radius-md);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .stat-title {
-      color: var(--text-gray);
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-    
-    .stat-change {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.75rem;
-      margin-top: 0.5rem;
-    }
-    
-    .stat-change.positive {
-      color: #10b981;
-    }
-    
-    .stat-change.negative {
-      color: #ef4444;
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .top-nav {
+        padding: 1rem;
+      }
+      
+      .content-container {
+        padding: 1.5rem;
+      }
+      
+      .bots-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .bot-actions {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -479,202 +798,260 @@
   <main class="main-content">
     <!-- Верхняя панель навигации -->
     <div class="top-nav">
-      <h1 class="page-title">Управление агентом</h1>
+      <h1 class="page-title" id="page-title">Мои агенты</h1>
       
-      <div class="page-actions">
-        <button class="btn btn-outline" id="view-embed-code">
-          <i class="fas fa-code"></i> Код для встраивания
-        </button>
-        <button class="btn btn-danger" id="delete-agent">
-          <i class="fas fa-trash"></i> Удалить
-        </button>
-        <button class="btn btn-primary" id="save-agent">
-          <i class="fas fa-save"></i> Сохранить
+      <div class="page-actions" id="page-actions">
+        <button class="btn btn-primary" id="create-agent-btn">
+          <i class="fas fa-plus"></i> Создать нового агента
         </button>
       </div>
     </div>
     
     <!-- Контейнер для содержимого -->
     <div class="content-container">
-      <!-- Табы -->
-      <div class="tabs">
-        <div class="tab active" data-tab="settings">Настройки</div>
-        <div class="tab" data-tab="statistics">Статистика</div>
-        <div class="tab" data-tab="embed">Встраивание</div>
+      <!-- Хлебные крошки -->
+      <div class="breadcrumbs">
+        <div class="breadcrumb-item">
+          <a href="/static/dashboard.html">Дашборд</a>
+          <span class="breadcrumb-separator">
+            <i class="fas fa-chevron-right"></i>
+          </span>
+        </div>
+        <div class="breadcrumb-item" id="breadcrumb-current">Мои агенты</div>
       </div>
       
-      <!-- Таб настроек -->
-      <div class="tab-content active" id="settings-tab">
-        <form id="agent-form">
-          <div class="form-section">
-            <div class="form-group">
-              <label for="agent-name">Название агента</label>
-              <input type="text" id="agent-name" class="form-control" placeholder="Введите название" required>
+      <!-- Список агентов (режим списка) -->
+      <div id="agents-list-view">
+        <div class="bots-grid" id="bots-grid">
+          <!-- Здесь будут карточки ботов -->
+          
+          <!-- Кнопка добавления бота -->
+          <div class="add-bot-card" id="add-bot-button">
+            <div class="add-icon">
+              <i class="fas fa-plus"></i>
+            </div>
+            <div class="add-bot-text">Создать нового бота</div>
+            <div class="add-bot-subtext">Настройте системный промпт, голос и базу знаний</div>
+          </div>
+        </div>
+        
+        <!-- Пустое состояние -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+          <div class="empty-icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h3 class="empty-title">У вас пока нет голосовых ассистентов</h3>
+          <p class="empty-description">
+            Создайте своего первого голосового ассистента, настройте его и встройте на свой сайт.
+          </p>
+          <button class="btn btn-primary" id="empty-state-add-bot">
+            <i class="fas fa-plus"></i> Создать нового бота
+          </button>
+        </div>
+      </div>
+      
+      <!-- Режим редактирования агента -->
+      <div id="agent-edit-view" style="display: none;">
+        <!-- Табы -->
+        <div class="tabs">
+          <div class="tab active" data-tab="settings">Настройки</div>
+          <div class="tab" data-tab="statistics">Статистика</div>
+          <div class="tab" data-tab="embed">Встраивание</div>
+        </div>
+        
+        <!-- Таб настроек -->
+        <div class="tab-content active" id="settings-tab">
+          <form id="agent-form">
+            <div class="form-section">
+              <div class="form-group">
+                <label for="agent-name">Название агента</label>
+                <input type="text" id="agent-name" class="form-control" placeholder="Введите название" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="agent-description">Описание (опционально)</label>
+                <textarea id="agent-description" class="form-control" placeholder="Описание вашего голосового ассистента"></textarea>
+              </div>
             </div>
             
-            <div class="form-group">
-              <label for="agent-description">Описание (опционально)</label>
-              <textarea id="agent-description" class="form-control" placeholder="Описание вашего голосового ассистента"></textarea>
+            <div class="form-section">
+              <div class="form-group">
+                <label for="system-prompt">Системный промпт</label>
+                <textarea id="system-prompt" class="form-control" placeholder="Инструкции для ассистента" required></textarea>
+                <p style="margin-top: 0.5rem; color: var(--text-gray); font-size: 0.875rem;">
+                  Задайте инструкции для вашего ассистента. Это определит его знания, стиль общения и поведение.
+                </p>
+              </div>
             </div>
-          </div>
-          
-          <div class="form-section">
-            <div class="form-group">
-              <label for="system-prompt">Системный промпт</label>
-              <textarea id="system-prompt" class="form-control" placeholder="Инструкции для ассистента" required></textarea>
-              <p style="margin-top: 0.5rem; color: var(--text-gray); font-size: 0.875rem;">
-                Задайте инструкции для вашего ассистента. Это определит его знания, стиль общения и поведение.
-              </p>
+            
+            <div class="form-section">
+              <div class="form-group">
+                <label>Голос ассистента</label>
+                <div class="voice-options">
+                  <label class="voice-option selected">
+                    <input type="radio" name="voice" value="alloy" checked>
+                    <span>Alloy</span>
+                  </label>
+                  <label class="voice-option">
+                    <input type="radio" name="voice" value="echo">
+                    <span>Echo</span>
+                  </label>
+                  <label class="voice-option">
+                    <input type="radio" name="voice" value="fable">
+                    <span>Fable</span>
+                  </label>
+                  <label class="voice-option">
+                    <input type="radio" name="voice" value="onyx">
+                    <span>Onyx</span>
+                  </label>
+                  <label class="voice-option">
+                    <input type="radio" name="voice" value="nova">
+                    <span>Nova</span>
+                  </label>
+                  <label class="voice-option">
+                    <input type="radio" name="voice" value="shimmer">
+                    <span>Shimmer</span>
+                  </label>
+                </div>
+              </div>
             </div>
-          </div>
-          
+            
+            <div class="form-footer">
+              <button type="button" class="btn btn-outline" id="cancel-button">Отмена</button>
+              <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Таб статистики -->
+        <div class="tab-content" id="statistics-tab">
           <div class="form-section">
-            <div class="form-group">
-              <label>Голос ассистента</label>
-              <div class="voice-options">
-                <label class="voice-option selected">
-                  <input type="radio" name="voice" value="alloy" checked>
-                  <span>Alloy</span>
-                </label>
-                <label class="voice-option">
-                  <input type="radio" name="voice" value="echo">
-                  <span>Echo</span>
-                </label>
-                <label class="voice-option">
-                  <input type="radio" name="voice" value="fable">
-                  <span>Fable</span>
-                </label>
-                <label class="voice-option">
-                  <input type="radio" name="voice" value="onyx">
-                  <span>Onyx</span>
-                </label>
-                <label class="voice-option">
-                  <input type="radio" name="voice" value="nova">
-                  <span>Nova</span>
-                </label>
-                <label class="voice-option">
-                  <input type="radio" name="voice" value="shimmer">
-                  <span>Shimmer</span>
-                </label>
+            <h3 style="margin-bottom: 1rem;">Статистика использования</h3>
+            <p>Здесь будет отображаться статистика использования вашего голосового ассистента.</p>
+            
+            <div class="stats-grid" style="margin-top: 1.5rem;">
+              <div class="stat-card">
+                <div class="stat-title">Всего взаимодействий</div>
+                <div class="stat-value">0</div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="stat-title">Сегодня</div>
+                <div class="stat-value">0</div>
+              </div>
+              
+              <div class="stat-card">
+                <div class="stat-title">Среднее время ответа</div>
+                <div class="stat-value">0 сек</div>
               </div>
             </div>
           </div>
+        </div>
+        
+        <!-- Таб встраивания -->
+        <div class="tab-content" id="embed-tab">
+          <div class="form-section">
+            <h3 style="margin-bottom: 1rem;">Код для встраивания</h3>
+            <p>Скопируйте этот код и вставьте его на свой сайт, чтобы добавить голосового ассистента.</p>
+            
+            <div style="margin-top: 1.5rem; background-color: var(--bg-light); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <pre id="embed-code" style="white-space: pre-wrap; font-family: monospace; margin: 0;"></pre>
+              <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" id="copy-embed-code">
+                  <i class="fas fa-copy"></i> Копировать код
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Модальное окно для создания бота -->
+  <div class="modal-overlay" id="create-bot-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Создать нового бота</h3>
+        <button class="modal-close" id="close-modal-button">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <form id="create-bot-form">
+          <div class="form-group">
+            <label for="bot-name">Название бота</label>
+            <input type="text" id="bot-name" class="form-control" placeholder="Например: Бот поддержки" required>
+          </div>
           
-          <div class="form-footer">
-            <button type="button" class="btn btn-outline" id="cancel-button">Отмена</button>
-            <button type="submit" class="btn btn-primary">Сохранить</button>
+          <div class="form-group">
+            <label for="bot-description">Описание (опционально)</label>
+            <input type="text" id="bot-description" class="form-control" placeholder="Кратко опишите назначение бота">
+          </div>
+          
+          <div class="form-group">
+            <label for="bot-prompt">Системный промпт</label>
+            <textarea id="bot-prompt" class="form-control" placeholder="Инструкции для ассистента">Ты умный голосовой помощник. Отвечай на вопросы пользователя коротко, информативно и с небольшой ноткой юмора, когда это уместно. Стремись быть полезным и предоставлять точную информацию.</textarea>
+            <div style="margin-top: 0.5rem; color: var(--text-gray); font-size: 0.875rem;">
+              Задайте инструкции для вашего ассистента. Это определит его знания, стиль общения и поведение.
+            </div>
           </div>
         </form>
       </div>
       
-      <!-- Таб статистики -->
-      <div class="tab-content" id="statistics-tab">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-title">Всего взаимодействий</div>
-            <div class="stat-value">245</div>
-            <div class="stat-change positive">
-              <i class="fas fa-arrow-up"></i> 12% за последнюю неделю
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-title">Сегодня</div>
-            <div class="stat-value">32</div>
-            <div class="stat-change positive">
-              <i class="fas fa-arrow-up"></i> 8% от вчера
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-title">Среднее время ответа</div>
-            <div class="stat-value">1.8 сек</div>
-            <div class="stat-change negative">
-              <i class="fas fa-arrow-down"></i> 0.3 сек от прошлой недели
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-title">Успешные взаимодействия</div>
-            <div class="stat-value">92%</div>
-            <div class="stat-change positive">
-              <i class="fas fa-arrow-up"></i> 3% от прошлого месяца
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-section">
-          <h3 style="margin-bottom: 1rem;">Последние взаимодействия</h3>
-          <p>Здесь будет таблица с историей взаимодействий пользователей с ботом.</p>
-        </div>
-      </div>
-      
-      <!-- Таб встраивания -->
-      <div class="tab-content" id="embed-tab">
-        <div class="form-section">
-          <h3 style="margin-bottom: 1rem;">Код для встраивания</h3>
-          <p>Скопируйте этот код и вставьте его на свой сайт, чтобы добавить голосового ассистента.</p>
-          
-          <div class="embed-container">
-            <div class="embed-code" id="embed-code">
-<!-- Код будет загружен динамически -->
-            </div>
-            <div class="embed-actions">
-              <button class="btn btn-primary" id="copy-embed-code">
-                <i class="fas fa-copy"></i> Копировать код
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-section">
-          <h3 style="margin-bottom: 1rem;">Предпросмотр</h3>
-          <p>Так будет выглядеть ваш ассистент на сайте:</p>
-          
-          <div style="margin-top: 1.5rem; text-align: center;">
-            <div style="display: inline-block; position: relative;">
-              <div style="width: 400px; height: 300px; background-color: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 0.5rem; display: flex; justify-content: center; align-items: center;">
-                <div style="position: absolute; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4a86e8, #2563eb); display: flex; justify-content: center; align-items: center; color: white; box-shadow: 0 4px 15px rgba(74, 134, 232, 0.4);">
-                  <i class="fas fa-robot" style="font-size: 1.5rem;"></i>
-                </div>
-              </div>
-              <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-gray);">Пример вашего сайта с виджетом голосового ассистента</div>
-            </div>
-          </div>
-        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="cancel-bot-button">Отмена</button>
+        <button type="button" class="btn btn-primary" id="submit-bot-button">Создать</button>
       </div>
     </div>
-    
-    <!-- Уведомление -->
-    <div class="notification notification-success" id="notification" style="display: none;">
-      <div class="notification-icon">
-        <i class="fas fa-check-circle"></i>
-      </div>
-      <div class="notification-content">
-        <div id="notification-message">Операция успешно выполнена!</div>
-      </div>
-      <button class="notification-close" id="notification-close">&times;</button>
+  </div>
+  
+  <!-- Уведомление -->
+  <div class="notification notification-success" id="notification" style="display: none;">
+    <div class="notification-icon">
+      <i class="fas fa-check-circle"></i>
     </div>
-  </main>
+    <div class="notification-content">
+      <div id="notification-message"></div>
+    </div>
+    <button class="notification-close" id="notification-close">&times;</button>
+  </div>
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Определение переменных
-      let currentAgentId = null;
-      
-      // Получаем элементы
+      // Получаем элементы DOM
+      const pageTitle = document.getElementById('page-title');
+      const pageActions = document.getElementById('page-actions');
+      const breadcrumbCurrent = document.getElementById('breadcrumb-current');
+      const agentsListView = document.getElementById('agents-list-view');
+      const agentEditView = document.getElementById('agent-edit-view');
+      const botsGrid = document.getElementById('bots-grid');
+      const emptyState = document.getElementById('empty-state');
+      const addBotButton = document.getElementById('add-bot-button');
+      const emptyStateAddBot = document.getElementById('empty-state-add-bot');
+      const createAgentBtn = document.getElementById('create-agent-btn');
+      const createBotModal = document.getElementById('create-bot-modal');
+      const closeModalButton = document.getElementById('close-modal-button');
+      const cancelBotButton = document.getElementById('cancel-bot-button');
+      const submitBotButton = document.getElementById('submit-bot-button');
+      const createBotForm = document.getElementById('create-bot-form');
+      const agentForm = document.getElementById('agent-form');
       const tabs = document.querySelectorAll('.tab');
       const tabContents = document.querySelectorAll('.tab-content');
       const voiceOptions = document.querySelectorAll('.voice-option');
-      const agentForm = document.getElementById('agent-form');
-      const viewEmbedCodeBtn = document.getElementById('view-embed-code');
-      const deleteAgentBtn = document.getElementById('delete-agent');
-      const saveAgentBtn = document.getElementById('save-agent');
       const cancelButton = document.getElementById('cancel-button');
       const copyEmbedCodeBtn = document.getElementById('copy-embed-code');
+      const notification = document.getElementById('notification');
+      const notificationMessage = document.getElementById('notification-message');
+      const notificationClose = document.getElementById('notification-close');
       const logoutButton = document.getElementById('logout-button');
       
-      // Основные функции для работы с API
+      // Состояние приложения
+      let currentAgentId = null;
+      let currentView = 'list'; // 'list' или 'edit'
+      
+      // API клиент
       const api = {
         baseUrl: '/api',
         
@@ -744,18 +1121,33 @@
           return this.fetch(endpoint, { method: 'DELETE' });
         },
         
+        // Получение текущего пользователя
+        getCurrentUser() {
+          return this.get('/users/me');
+        },
+        
+        // Получение списка агентов
+        getAssistants() {
+          return this.get('/assistants');
+        },
+        
         // Получение агента по ID
-        getAgent(id) {
+        getAssistant(id) {
           return this.get(`/assistants/${id}`);
         },
         
+        // Создание нового агента
+        createAssistant(assistantData) {
+          return this.post('/assistants', assistantData);
+        },
+        
         // Обновление агента
-        updateAgent(id, data) {
+        updateAssistant(id, data) {
           return this.put(`/assistants/${id}`, data);
         },
         
         // Удаление агента
-        deleteAgent(id) {
+        deleteAssistant(id) {
           return this.delete(`/assistants/${id}`);
         },
         
@@ -771,9 +1163,15 @@
         showNotification(message, type = 'success') {
           const notification = document.getElementById('notification');
           const notificationMessage = document.getElementById('notification-message');
+          const iconElement = notification.querySelector('.notification-icon i');
           
           // Удаляем все классы типов
           notification.classList.remove('notification-success', 'notification-error', 'notification-info');
+          
+          // Изменяем иконку
+          iconElement.className = type === 'success' ? 'fas fa-check-circle' : 
+                                 type === 'error' ? 'fas fa-exclamation-circle' : 
+                                 'fas fa-info-circle';
           
           // Устанавливаем тип и сообщение
           notification.classList.add(`notification-${type}`);
@@ -811,6 +1209,146 @@
           });
         },
         
+        // Показать модальное окно создания бота
+        showModal() {
+          createBotModal.classList.add('visible');
+          document.body.style.overflow = 'hidden';
+        },
+        
+        // Скрыть модальное окно
+        hideModal() {
+          createBotModal.classList.remove('visible');
+          document.body.style.overflow = '';
+          
+          // Сбрасываем форму
+          createBotForm.reset();
+        },
+        
+        // Переключение между режимами просмотра
+        switchView(view, agentId = null) {
+          currentView = view;
+          currentAgentId = agentId;
+          
+          if (view === 'list') {
+            // Переключаемся на вид списка
+            pageTitle.textContent = 'Мои агенты';
+            breadcrumbCurrent.textContent = 'Мои агенты';
+            
+            // Показываем кнопку создания агента
+            pageActions.innerHTML = `
+              <button class="btn btn-primary" id="create-agent-btn">
+                <i class="fas fa-plus"></i> Создать нового агента
+              </button>
+            `;
+            
+            // Привязываем обработчик к новой кнопке
+            document.getElementById('create-agent-btn').addEventListener('click', function() {
+              ui.showModal();
+            });
+            
+            // Отображаем представление списка
+            agentsListView.style.display = 'block';
+            agentEditView.style.display = 'none';
+            
+            // Загружаем список агентов
+            loadAgents();
+            
+          } else if (view === 'edit' && agentId) {
+            // Переключаемся на режим редактирования
+            pageTitle.textContent = 'Редактирование агента';
+            breadcrumbCurrent.innerHTML = `
+              <a href="/static/agents.html">Мои агенты</a>
+              <span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+              Редактирование
+            `;
+            
+            // Обновляем действия
+            pageActions.innerHTML = `
+              <button class="btn btn-outline" id="view-embed-code">
+                <i class="fas fa-code"></i> Код для встраивания
+              </button>
+              <button class="btn btn-danger" id="delete-agent">
+                <i class="fas fa-trash"></i> Удалить
+              </button>
+              <button class="btn btn-primary" id="save-agent">
+                <i class="fas fa-save"></i> Сохранить
+              </button>
+            `;
+            
+            // Привязываем обработчики
+            document.getElementById('view-embed-code').addEventListener('click', function() {
+              ui.switchTab('embed');
+            });
+            
+            document.getElementById('save-agent').addEventListener('click', saveAgent);
+            
+            document.getElementById('delete-agent').addEventListener('click', deleteAgent);
+            
+            // Отображаем представление редактирования
+            agentEditView.style.display = 'block';
+            agentsListView.style.display = 'none';
+            
+            // Загружаем данные агента
+            loadAgentData(agentId);
+          }
+        },
+        
+        // Отображение списка агентов
+        renderAgents(agents) {
+          // Очищаем существующие карточки агентов
+          const existingBots = botsGrid.querySelectorAll('.bot-card');
+          existingBots.forEach(card => card.remove());
+          
+          // Если нет агентов, показываем пустое состояние
+          if (agents.length === 0) {
+            emptyState.style.display = 'block';
+            botsGrid.style.display = 'none';
+            return;
+          }
+          
+          // Иначе показываем сетку агентов
+          emptyState.style.display = 'none';
+          botsGrid.style.display = 'grid';
+          
+          // Добавляем карточки для всех агентов
+          agents.forEach(bot => {
+            const botCard = document.createElement('div');
+            botCard.className = 'bot-card';
+            botCard.innerHTML = `
+              <div class="bot-header">
+                <div class="bot-icon">
+                  <i class="fas fa-robot"></i>
+                </div>
+                <button class="bot-menu-button" data-id="${bot.id}">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </div>
+              <div class="bot-info">
+                <h3 class="bot-name">${bot.name}</h3>
+                <p class="bot-description">${bot.description || 'Нет описания'}</p>
+                <div class="bot-status">
+                  <div class="status-indicator ${bot.is_active ? 'status-active' : 'status-inactive'}"></div>
+                  ${bot.is_active ? 'Активен' : 'Неактивен'}
+                </div>
+                <div class="bot-actions">
+                  <a href="/static/agents.html?id=${bot.id}" class="bot-action-btn action-configure">
+                    <i class="fas fa-cog"></i> Настроить
+                  </a>
+                  <button class="bot-action-btn action-embed" data-id="${bot.id}">
+                    <i class="fas fa-code"></i> Встроить
+                  </button>
+                </div>
+              </div>
+            `;
+            
+            // Добавляем перед кнопкой добавления
+            botsGrid.insertBefore(botCard, addBotButton);
+          });
+          
+          // Добавляем обработчики для кнопок
+          this.setupBotActions();
+        },
+        
         // Заполнение формы данными агента
         fillAgentForm(agent) {
           document.getElementById('agent-name').value = agent.name || '';
@@ -828,7 +1366,7 @@
           }
         },
         
-        // Получение данных из формы
+        // Получение данных из формы редактирования
         getFormData() {
           return {
             name: document.getElementById('agent-name').value,
@@ -836,45 +1374,130 @@
             system_prompt: document.getElementById('system-prompt').value,
             voice: document.querySelector('input[name="voice"]:checked').value
           };
+        },
+        
+        // Получение данных из формы создания
+        getCreateFormData() {
+          return {
+            name: document.getElementById('bot-name').value,
+            description: document.getElementById('bot-description').value,
+            system_prompt: document.getElementById('bot-prompt').value,
+            voice: 'alloy',  // По умолчанию используем alloy
+            language: 'ru'   // По умолчанию русский язык
+          };
+        },
+        
+        // Установка обработчиков для кнопок ботов
+        setupBotActions() {
+          // Кнопки встраивания
+          document.querySelectorAll('.action-embed').forEach(button => {
+            button.addEventListener('click', async function() {
+              const botId = this.getAttribute('data-id');
+              
+              try {
+                const embedData = await api.getEmbedCode(botId);
+                
+                // Копируем код в буфер обмена
+                const textarea = document.createElement('textarea');
+                textarea.value = embedData.embed_code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                ui.showNotification('Код для встраивания скопирован в буфер обмена!');
+              } catch (error) {
+                ui.showNotification(error.message, 'error');
+              }
+            });
+          });
         }
       };
       
       // Проверка авторизации
-      if (!api.isAuthenticated()) {
-        window.location.href = '/static/login.html';
-        return;
+      function checkAuth() {
+        if (!api.isAuthenticated()) {
+          window.location.href = '/static/login.html';
+          return false;
+        }
+        return true;
       }
       
-      // Получение ID агента из URL параметров
-      const urlParams = new URLSearchParams(window.location.search);
-      currentAgentId = urlParams.get('id');
-      
-      // Если ID не указан, перенаправляем на страницу со списком агентов
-      if (!currentAgentId) {
-        window.location.href = '/static/dashboard.html';
-        return;
+      // Загрузка списка агентов
+      async function loadAgents() {
+        try {
+          const agents = await api.getAssistants();
+          ui.renderAgents(agents);
+        } catch (error) {
+          ui.showNotification(error.message || 'Ошибка при загрузке списка агентов', 'error');
+        }
       }
       
       // Загрузка данных агента
-      async function loadAgentData() {
+      async function loadAgentData(agentId) {
         try {
-          const agent = await api.getAgent(currentAgentId);
+          const agent = await api.getAssistant(agentId);
           ui.fillAgentForm(agent);
           
           // Загружаем код встраивания
-          const embedData = await api.getEmbedCode(currentAgentId);
+          const embedData = await api.getEmbedCode(agentId);
           document.getElementById('embed-code').textContent = embedData.embed_code;
         } catch (error) {
           ui.showNotification(error.message || 'Ошибка при загрузке данных агента', 'error');
         }
       }
       
+      // Создание нового агента
+      async function createAgent() {
+        const formData = ui.getCreateFormData();
+        
+        try {
+          const agent = await api.createAssistant(formData);
+          ui.showNotification('Агент успешно создан!');
+          ui.hideModal();
+          
+          // Переключаемся на страницу редактирования нового агента
+          ui.switchView('edit', agent.id);
+        } catch (error) {
+          ui.showNotification(error.message || 'Ошибка при создании агента', 'error');
+        }
+      }
+      
+      // Сохранение изменений агента
+      async function saveAgent() {
+        const formData = ui.getFormData();
+        
+        try {
+          await api.updateAssistant(currentAgentId, formData);
+          ui.showNotification('Изменения успешно сохранены!');
+        } catch (error) {
+          ui.showNotification(error.message || 'Ошибка при сохранении изменений', 'error');
+        }
+      }
+      
+      // Удаление агента
+      async function deleteAgent() {
+        const confirmed = confirm('Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить.');
+        
+        if (confirmed) {
+          try {
+            await api.deleteAssistant(currentAgentId);
+            ui.showNotification('Агент успешно удален!');
+            
+            // Возвращаемся к списку агентов
+            ui.switchView('list');
+          } catch (error) {
+            ui.showNotification(error.message || 'Ошибка при удалении агента', 'error');
+          }
+        }
+      }
+      
       // Обработчики событий
       
-      // Переключение вкладок
+      // Переключение вкладок в режиме редактирования
       tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          const tabId = tab.getAttribute('data-tab');
+        tab.addEventListener('click', function() {
+          const tabId = this.getAttribute('data-tab');
           ui.switchTab(tabId);
         });
       });
@@ -890,87 +1513,94 @@
         });
       });
       
-      // Кнопка "Код для встраивания"
-      viewEmbedCodeBtn.addEventListener('click', () => {
-        ui.switchTab('embed');
+      // Открытие модального окна для создания бота
+      if (createAgentBtn) {
+        createAgentBtn.addEventListener('click', function() {
+          ui.showModal();
+        });
+      }
+      
+      // Кнопка добавления бота в режиме списка
+      addBotButton.addEventListener('click', function() {
+        ui.showModal();
+      });
+      
+      // Кнопка в пустом состоянии
+      if (emptyStateAddBot) {
+        emptyStateAddBot.addEventListener('click', function() {
+          ui.showModal();
+        });
+      }
+      
+      // Закрытие модального окна
+      closeModalButton.addEventListener('click', ui.hideModal);
+      cancelBotButton.addEventListener('click', ui.hideModal);
+      
+      // Создание бота из модального окна
+      submitBotButton.addEventListener('click', createAgent);
+      
+      // Отмена изменений в режиме редактирования
+      cancelButton.addEventListener('click', function() {
+        // Возвращаемся к списку агентов
+        ui.switchView('list');
+      });
+      
+      // Сохранение изменений агента
+      agentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveAgent();
       });
       
       // Копирование кода встраивания
-      copyEmbedCodeBtn.addEventListener('click', () => {
+      copyEmbedCodeBtn.addEventListener('click', function() {
         const embedCode = document.getElementById('embed-code');
-        const tempTextarea = document.createElement('textarea');
-        tempTextarea.value = embedCode.textContent;
-        document.body.appendChild(tempTextarea);
-        tempTextarea.select();
+        
+        // Копируем код
+        const textarea = document.createElement('textarea');
+        textarea.value = embedCode.textContent;
+        document.body.appendChild(textarea);
+        textarea.select();
         document.execCommand('copy');
-        document.body.removeChild(tempTextarea);
+        document.body.removeChild(textarea);
         
-        ui.showNotification('Код для встраивания скопирован!', 'success');
-      });
-      
-      // Сохранение изменений (кнопка в верхней панели)
-      saveAgentBtn.addEventListener('click', async () => {
-        try {
-          const formData = ui.getFormData();
-          await api.updateAgent(currentAgentId, formData);
-          ui.showNotification('Изменения успешно сохранены!', 'success');
-        } catch (error) {
-          ui.showNotification(error.message || 'Ошибка при сохранении изменений', 'error');
-        }
-      });
-      
-      // Отправка формы
-      agentForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        try {
-          const formData = ui.getFormData();
-          await api.updateAgent(currentAgentId, formData);
-          ui.showNotification('Изменения успешно сохранены!', 'success');
-        } catch (error) {
-          ui.showNotification(error.message || 'Ошибка при сохранении изменений', 'error');
-        }
-      });
-      
-      // Отмена изменений
-      cancelButton.addEventListener('click', () => {
-        // Перезагружаем данные агента
-        loadAgentData();
-        ui.showNotification('Изменения отменены', 'info');
-      });
-      
-      // Удаление агента
-      deleteAgentBtn.addEventListener('click', async () => {
-        const confirmed = confirm('Вы уверены, что хотите удалить этого агента? Это действие нельзя отменить.');
-        
-        if (confirmed) {
-          try {
-            await api.deleteAgent(currentAgentId);
-            ui.showNotification('Агент успешно удален!', 'success');
-            
-            // Перенаправляем на страницу со списком агентов
-            setTimeout(() => {
-              window.location.href = '/static/dashboard.html';
-            }, 1000);
-          } catch (error) {
-            ui.showNotification(error.message || 'Ошибка при удалении агента', 'error');
-          }
-        }
+        ui.showNotification('Код для встраивания скопирован!');
       });
       
       // Закрытие уведомления
-      document.getElementById('notification-close').addEventListener('click', () => {
-        ui.hideNotification();
-      });
+      notificationClose.addEventListener('click', ui.hideNotification);
       
       // Выход из системы
-      logoutButton.addEventListener('click', () => {
+      logoutButton.addEventListener('click', function() {
         localStorage.removeItem('auth_token');
         window.location.href = '/static/login.html';
       });
       
+      // Закрытие модального окна при клике вне его
+      createBotModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          ui.hideModal();
+        }
+      });
+      
       // Инициализация страницы
-      loadAgentData();
+      function initPage() {
+        if (!checkAuth()) return;
+        
+        // Проверяем наличие ID агента в URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const agentId = urlParams.get('id');
+        
+        if (agentId) {
+          // Если есть ID, переключаемся в режим редактирования
+          ui.switchView('edit', agentId);
+        } else {
+          // Иначе показываем список агентов
+          ui.switchView('list');
+        }
+      }
+      
+      // Запускаем инициализацию
+      initPage();
     });
   </script>
 </body>
