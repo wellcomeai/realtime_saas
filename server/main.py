@@ -7,10 +7,12 @@ import traceback
 import uuid
 import time
 from datetime import datetime
-from typing import Dict, Optional, List, Any, Union
+from typing import Dict, Optional, List, Any, Union, BinaryIO
 import httpx
+import tempfile
+import shutil
 
-from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, HTTPException, Depends, Header, Body
+from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, HTTPException, Depends, Header, Body, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,18 +20,21 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, validator
 
-# Для PostgreSQL и ORM
-from sqlalchemy import create_engine, Column, String, Boolean, JSON, ForeignKey, Float, DateTime, Text
+# Import OpenAI for direct Assistant API integration
+from openai import OpenAI
+
+# For PostgreSQL and ORM
+from sqlalchemy import create_engine, Column, String, Boolean, JSON, ForeignKey, Float, DateTime, Text, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy as sa
 from sqlalchemy.sql import func
 
-# Для WebSocket
+# For WebSocket
 import websockets
 
-# Для JWT
+# For JWT
 import jwt
 from jwt.exceptions import PyJWTError
 from datetime import timedelta
@@ -92,11 +97,15 @@ class AssistantConfig(Base):
     google_sheet_id = Column(String, nullable=True)
     functions = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
+    # Добавленное поле для хранения ID ассистента, созданного в OpenAI
+    openai_assistant_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="assistants")
     conversations = relationship("Conversation", back_populates="assistant", cascade="all, delete-orphan")
+    # Добавленная связь с файлами
+    files = relationship("FileUpload", back_populates="assistant", cascade="all, delete-orphan")
 
 
 class Conversation(Base):
@@ -111,6 +120,21 @@ class Conversation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     assistant = relationship("AssistantConfig", back_populates="conversations")
+
+
+# Новая модель для отслеживания загруженных файлов
+class FileUpload(Base):
+    __tablename__ = "file_uploads"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistant_configs.id", ondelete="CASCADE"))
+    name = Column(String, nullable=False)
+    size = Column(Integer, nullable=False)
+    mime_type = Column(String, nullable=True)
+    openai_file_id = Column(String, nullable=False)  # ID файла в OpenAI
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    assistant = relationship("AssistantConfig", back_populates="files")
 
 
 # Допустимые голоса с русскими названиями для интерфейса
@@ -263,6 +287,15 @@ class AssistantUpdate(BaseModel):
             raise ValueError(f'Голос должен быть одним из {", ".join(AVAILABLE_VOICES)}')
         return v
 
+# Схема для информации о файле
+class FileInfo(BaseModel):
+    id: str
+    name: str
+    size: int
+    mime_type: Optional[str] = None
+    openai_file_id: str
+    created_at: Optional[datetime] = None
+
 # Хранилище активных соединений клиент <-> OpenAI
 client_connections = {}
 
@@ -331,8 +364,15 @@ async def create_openai_connection(api_key=None):
         logger.error(f"Ошибка при создании соединения с OpenAI: {str(e)}")
         raise
 
-async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEFAULT_SYSTEM_MESSAGE, functions=None):
-    """Отправляет настройки сессии в WebSocket OpenAI"""
+async def send_session_update_with_assistant(
+    openai_ws, 
+    voice=DEFAULT_VOICE, 
+    system_message=DEFAULT_SYSTEM_MESSAGE, 
+    functions=None,
+    assistant_id=None,
+    thread_id=None
+):
+    """Отправляет настройки сессии в WebSocket OpenAI с использованием assistant_id"""
     
     # Настройка определения завершения речи
     turn_detection = {
@@ -354,7 +394,7 @@ async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEF
                 "parameters": func.get("parameters")
             })
     
-    # Подготавливаем настройки сессии
+    # Базовые настройки сессии
     session_update = {
         "type": "session.update",
         "session": {
@@ -371,10 +411,17 @@ async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEF
         }
     }
     
+    # Добавляем идентификаторы ассистента и треда, если они предоставлены
+    if assistant_id:
+        session_update["session"]["assistant_id"] = assistant_id
+    
+    if thread_id:
+        session_update["session"]["thread_id"] = thread_id
+    
     try:
         # Отправляем настройки и ожидаем небольшое время для применения
         await openai_ws.send(json.dumps(session_update))
-        logger.info(f"Настройки сессии с голосом {voice} отправлены")
+        logger.info(f"Настройки сессии с голосом {voice} и ассистентом {assistant_id} отправлены")
     except Exception as e:
         logger.error(f"Ошибка при отправке настроек сессии: {str(e)}")
         raise
@@ -487,43 +534,29 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }
     return user_dict
-@app.put("/api/users/me")
-async def update_current_user(
-    user_update: UserUpdate, 
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_db)
-):
-    """Обновление информации о текущем пользователе"""
-    # Получаем пользователя из базы данных
-    user = db.query(User).filter(User.id == current_user.id).first()
-    
-    # Обновляем данные
-    user_data = user_update.dict(exclude_unset=True)
-    for key, value in user_data.items():
-        setattr(user, key, value)
-    
-    # Сохраняем изменения
-    db.commit()
-    db.refresh(user)
-    
-    # Возвращаем обновленные данные пользователя
-    user_dict = {
-        "id": str(user.id),
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "company_name": user.company_name,
-        "openai_api_key": user.openai_api_key,
-        "subscription_plan": user.subscription_plan,
-        "google_sheets_authorized": user.google_sheets_authorized,
-        "created_at": user.created_at.isoformat() if user.created_at else None
-    }
-    return user_dict
+
 # API для управления помощниками
 @app.post("/api/assistants", status_code=201)
 async def create_assistant(assistant: AssistantCreate, current_user: User = Depends(get_current_user), db = Depends(get_db)):
-    """Создание нового голосового помощника"""
+    """Создание нового голосового помощника с использованием OpenAI Assistant API"""
     try:
+        # Проверяем, есть ли API ключ у пользователя
+        api_key = current_user.openai_api_key or OPENAI_API_KEY
+        if not api_key:
+            raise HTTPException(status_code=400, detail="Требуется API ключ OpenAI")
+        
+        # Создаем ассистента в OpenAI
+        client = OpenAI(api_key=api_key)
+        
+        # Создаем Assistant с нужными параметрами
+        openai_assistant = client.beta.assistants.create(
+            name=assistant.name,
+            description=assistant.description or "",
+            instructions=assistant.system_prompt,
+            model="gpt-4o-realtime-preview-2024-10-01",
+            tools=[{"type": "retrieval"}]  # Включаем поддержку базы знаний
+        )
+        
         # Создаем помощника в базе данных
         new_assistant = AssistantConfig(
             user_id=current_user.id,
@@ -534,7 +567,8 @@ async def create_assistant(assistant: AssistantCreate, current_user: User = Depe
             language=assistant.language,
             google_sheet_id=assistant.google_sheet_id,
             functions=assistant.functions,
-            is_active=True
+            is_active=True,
+            openai_assistant_id=openai_assistant.id  # Сохраняем ID ассистента из OpenAI
         )
         
         db.add(new_assistant)
@@ -553,6 +587,7 @@ async def create_assistant(assistant: AssistantCreate, current_user: User = Depe
             "google_sheet_id": new_assistant.google_sheet_id,
             "functions": new_assistant.functions,
             "is_active": new_assistant.is_active,
+            "openai_assistant_id": new_assistant.openai_assistant_id,
             "created_at": new_assistant.created_at.isoformat() if new_assistant.created_at else None,
             "updated_at": new_assistant.updated_at.isoformat() if new_assistant.updated_at else None
         }
@@ -583,6 +618,7 @@ async def get_user_assistants(current_user: User = Depends(get_current_user), db
                 "google_sheet_id": assistant.google_sheet_id,
                 "functions": assistant.functions,
                 "is_active": assistant.is_active,
+                "openai_assistant_id": assistant.openai_assistant_id,
                 "created_at": assistant.created_at.isoformat() if assistant.created_at else None,
                 "updated_at": assistant.updated_at.isoformat() if assistant.updated_at else None
             })
@@ -616,6 +652,7 @@ async def get_assistant(assistant_id: str, current_user: User = Depends(get_curr
             "google_sheet_id": assistant.google_sheet_id,
             "functions": assistant.functions,
             "is_active": assistant.is_active,
+            "openai_assistant_id": assistant.openai_assistant_id,
             "created_at": assistant.created_at.isoformat() if assistant.created_at else None,
             "updated_at": assistant.updated_at.isoformat() if assistant.updated_at else None
         }
@@ -630,7 +667,7 @@ async def get_assistant(assistant_id: str, current_user: User = Depends(get_curr
 
 @app.put("/api/assistants/{assistant_id}")
 async def update_assistant(assistant_id: str, assistant_update: AssistantUpdate, current_user: User = Depends(get_current_user), db = Depends(get_db)):
-    """Обновление информации о помощнике"""
+    """Обновление информации о помощнике и синхронизация с OpenAI"""
     try:
         # Проверяем, существует ли помощник и принадлежит ли он пользователю
         assistant = db.query(AssistantConfig).filter(
@@ -646,7 +683,36 @@ async def update_assistant(assistant_id: str, assistant_update: AssistantUpdate,
         
         if not update_data:
             return {"message": "Нет данных для обновления"}
+        
+        # Если обновляется системный промпт, обновляем ассистента в OpenAI
+        if "system_prompt" in update_data:
+            # Получаем API ключ
+            api_key = current_user.openai_api_key or OPENAI_API_KEY
             
+            # Инициализируем клиент OpenAI
+            client = OpenAI(api_key=api_key)
+            
+            # Проверяем наличие ID ассистента в OpenAI
+            if assistant.openai_assistant_id:
+                # Обновляем существующего ассистента
+                client.beta.assistants.update(
+                    assistant_id=assistant.openai_assistant_id,
+                    instructions=update_data["system_prompt"]
+                )
+                logger.info(f"Обновлен ассистент OpenAI {assistant.openai_assistant_id} с новым промптом")
+            else:
+                # Создаем нового ассистента в OpenAI
+                openai_assistant = client.beta.assistants.create(
+                    name=assistant.name,
+                    description=assistant.description or "",
+                    instructions=update_data["system_prompt"],
+                    model="gpt-4o-realtime-preview-2024-10-01",
+                    tools=[{"type": "retrieval"}]
+                )
+                # Сохраняем новый ID
+                update_data["openai_assistant_id"] = openai_assistant.id
+                logger.info(f"Создан новый ассистент OpenAI {openai_assistant.id}")
+        
         # Обновляем данные в базе
         for key, value in update_data.items():
             setattr(assistant, key, value)
@@ -666,21 +732,20 @@ async def update_assistant(assistant_id: str, assistant_update: AssistantUpdate,
             "google_sheet_id": assistant.google_sheet_id,
             "functions": assistant.functions,
             "is_active": assistant.is_active,
+            "openai_assistant_id": assistant.openai_assistant_id,
             "created_at": assistant.created_at.isoformat() if assistant.created_at else None,
             "updated_at": assistant.updated_at.isoformat() if assistant.updated_at else None
         }
         
         return assistant_dict
         
-    except HTTPException as he:
-        raise he
     except Exception as e:
         logger.error(f"Ошибка при обновлении помощника: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при обновлении помощника: {str(e)}")
 
 @app.delete("/api/assistants/{assistant_id}")
 async def delete_assistant(assistant_id: str, current_user: User = Depends(get_current_user), db = Depends(get_db)):
-    """Удаление помощника"""
+    """Удаление помощника и его ассистента в OpenAI"""
     try:
         # Проверяем, существует ли помощник и принадлежит ли он пользователю
         assistant = db.query(AssistantConfig).filter(
@@ -690,7 +755,20 @@ async def delete_assistant(assistant_id: str, current_user: User = Depends(get_c
         
         if not assistant:
             raise HTTPException(status_code=404, detail="Помощник не найден")
-            
+        
+        # Если есть ID ассистента в OpenAI, удаляем его
+        if assistant.openai_assistant_id:
+            try:
+                # Инициализируем клиент OpenAI
+                api_key = current_user.openai_api_key or OPENAI_API_KEY
+                client = OpenAI(api_key=api_key)
+                
+                # Удаляем из OpenAI
+                client.beta.assistants.delete(assistant.openai_assistant_id)
+                logger.info(f"Удален ассистент OpenAI {assistant.openai_assistant_id}")
+            except Exception as e:
+                logger.warning(f"Ошибка при удалении ассистента OpenAI: {str(e)}")
+        
         # Удаляем помощника из базы
         db.delete(assistant)
         db.commit()
@@ -742,12 +820,190 @@ async def get_assistant_embed_code(assistant_id: str, current_user: User = Depen
         logger.error(f"Ошибка при получении кода встраивания: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
+# Новые эндпоинты для работы с файлами ассистента
+@app.post("/api/assistants/{assistant_id}/files", status_code=201)
+async def upload_file_to_assistant(
+    assistant_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """Загрузка файла в базу знаний ассистента"""
+    try:
+        # Проверяем, существует ли помощник и принадлежит ли он пользователю
+        assistant = db.query(AssistantConfig).filter(
+            AssistantConfig.id == assistant_id,
+            AssistantConfig.user_id == current_user.id
+        ).first()
+        
+        if not assistant:
+            raise HTTPException(status_code=404, detail="Помощник не найден")
+        
+        # Проверяем наличие ID ассистента в OpenAI
+        if not assistant.openai_assistant_id:
+            raise HTTPException(status_code=400, detail="Помощник не инициализирован корректно с OpenAI")
+        
+        # Создаем временный файл
+        temp_file_path = None
+        try:
+            # Создаем временный файл
+            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                temp_file_path = temp_file.name
+                # Копируем содержимое загруженного файла
+                shutil.copyfileobj(file.file, temp_file)
+            
+            # Инициализируем клиент OpenAI
+            api_key = current_user.openai_api_key or OPENAI_API_KEY
+            client = OpenAI(api_key=api_key)
+            
+            # Загружаем файл в OpenAI
+            with open(temp_file_path, "rb") as f:
+                openai_file = client.files.create(
+                    file=f,
+                    purpose="assistants"
+                )
+            
+            # Прикрепляем файл к ассистенту
+            client.beta.assistants.files.create(
+                assistant_id=assistant.openai_assistant_id,
+                file_id=openai_file.id
+            )
+            
+            # Получаем размер файла
+            file_size = os.path.getsize(temp_file_path)
+            
+            # Сохраняем информацию о файле в базе данных
+            file_upload = FileUpload(
+                assistant_id=assistant_id,
+                name=file.filename,
+                size=file_size,
+                mime_type=file.content_type,
+                openai_file_id=openai_file.id
+            )
+            
+            db.add(file_upload)
+            db.commit()
+            db.refresh(file_upload)
+            
+            # Формируем ответ
+            return {
+                "id": str(file_upload.id),
+                "name": file_upload.name,
+                "size": file_upload.size,
+                "mime_type": file_upload.mime_type,
+                "openai_file_id": file_upload.openai_file_id,
+                "created_at": file_upload.created_at.isoformat() if file_upload.created_at else None
+            }
+            
+        finally:
+            # Удаляем временный файл
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+    
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке файла: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при загрузке файла: {str(e)}")
+
+@app.get("/api/assistants/{assistant_id}/files")
+async def get_assistant_files(
+    assistant_id: str,
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """Получение списка файлов ассистента"""
+    try:
+        # Проверяем, существует ли помощник и принадлежит ли он пользователю
+        assistant = db.query(AssistantConfig).filter(
+            AssistantConfig.id == assistant_id,
+            AssistantConfig.user_id == current_user.id
+        ).first()
+        
+        if not assistant:
+            raise HTTPException(status_code=404, detail="Помощник не найден")
+        
+        # Получаем файлы из базы данных
+        files = db.query(FileUpload).filter(FileUpload.assistant_id == assistant_id).all()
+        
+        # Преобразуем данные для JSON ответа
+        result = []
+        for file in files:
+            result.append({
+                "id": str(file.id),
+                "name": file.name,
+                "size": file.size,
+                "mime_type": file.mime_type,
+                "openai_file_id": file.openai_file_id,
+                "created_at": file.created_at.isoformat() if file.created_at else None
+            })
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Ошибка при получении списка файлов: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при получении списка файлов: {str(e)}")
+
+@app.delete("/api/assistants/{assistant_id}/files/{file_id}")
+async def delete_assistant_file(
+    assistant_id: str,
+    file_id: str,
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """Удаление файла из базы знаний ассистента"""
+    try:
+        # Проверяем, существует ли помощник и принадлежит ли он пользователю
+        assistant = db.query(AssistantConfig).filter(
+            AssistantConfig.id == assistant_id,
+            AssistantConfig.user_id == current_user.id
+        ).first()
+        
+        if not assistant:
+            raise HTTPException(status_code=404, detail="Помощник не найден")
+        
+        # Получаем файл из базы данных
+        file = db.query(FileUpload).filter(
+            FileUpload.id == file_id,
+            FileUpload.assistant_id == assistant_id
+        ).first()
+        
+        if not file:
+            raise HTTPException(status_code=404, detail="Файл не найден")
+        
+        # Инициализируем клиент OpenAI
+        api_key = current_user.openai_api_key or OPENAI_API_KEY
+        client = OpenAI(api_key=api_key)
+        
+        # Удаляем файл из ассистента в OpenAI
+        try:
+            client.beta.assistants.files.delete(
+                assistant_id=assistant.openai_assistant_id,
+                file_id=file.openai_file_id
+            )
+        except Exception as e:
+            logger.warning(f"Ошибка при удалении файла из ассистента OpenAI: {str(e)}")
+        
+        # Удаляем файл из OpenAI
+        try:
+            client.files.delete(file.openai_file_id)
+        except Exception as e:
+            logger.warning(f"Ошибка при удалении файла из OpenAI: {str(e)}")
+        
+        # Удаляем запись из базы данных
+        db.delete(file)
+        db.commit()
+        
+        return {"message": "Файл успешно удален"}
+    
+    except Exception as e:
+        logger.error(f"Ошибка при удалении файла: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при удалении файла: {str(e)}")
+
 # WebSocket для голосовых помощников
 @app.websocket("/ws/{assistant_id}")
 async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depends(get_db)):
     """
     WebSocket-эндпоинт для взаимодействия с голосовым помощником.
-    Устанавливает соединение с клиентом и OpenAI Realtime API.
+    Использует OpenAI Assistant API напрямую через WebSocket.
     """
     # Принимаем соединение
     await websocket.accept()
@@ -774,6 +1030,17 @@ async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depe
                 "type": "error",
                 "error": {
                     "message": "Этот помощник не активен"
+                }
+            })
+            await websocket.close()
+            return
+        
+        # Проверяем наличие ID ассистента в OpenAI
+        if not assistant.openai_assistant_id:
+            await websocket.send_json({
+                "type": "error",
+                "error": {
+                    "message": "Помощник не инициализирован корректно с OpenAI"
                 }
             })
             await websocket.close()
@@ -805,7 +1072,14 @@ async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depe
             })
             await websocket.close()
             return
-            
+        
+        # Инициализируем клиент OpenAI
+        client = OpenAI(api_key=openai_api_key)
+        
+        # Создаем thread для этой беседы
+        thread = client.beta.threads.create()
+        logger.info(f"Создан thread {thread.id} для ассистента {assistant.openai_assistant_id}")
+        
         # Хранение информации об этом клиенте
         client_connections[client_id] = {
             "client_ws": websocket,
@@ -816,8 +1090,10 @@ async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depe
             "functions": assistant.functions,
             "user_id": str(user_id),
             "assistant_id": str(assistant_id),
-            "tasks": [],     # Для хранения задач
-            "reconnecting": False,  # Флаг, указывающий на пересоздание соединения
+            "openai_assistant_id": assistant.openai_assistant_id,
+            "thread_id": thread.id,
+            "tasks": [],
+            "reconnecting": False,
             "conversation": {
                 "user_message": "",
                 "assistant_message": "",
@@ -834,12 +1110,14 @@ async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depe
         client_connections[client_id]["openai_ws"] = openai_ws
         logger.info(f"Соединение с OpenAI установлено для клиента {client_id}")
         
-        # Отправляем настройки сессии в OpenAI
-        await send_session_update(
+        # Отправляем настройки сессии в OpenAI с ID ассистента и thread
+        await send_session_update_with_assistant(
             openai_ws, 
             voice=assistant.voice, 
             system_message=assistant.system_prompt,
-            functions=assistant.functions
+            functions=assistant.functions,
+            assistant_id=assistant.openai_assistant_id,
+            thread_id=thread.id
         )
         
         # Создаем две задачи для двустороннего обмена сообщениями
