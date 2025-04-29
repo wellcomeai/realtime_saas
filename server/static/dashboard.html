@@ -422,103 +422,21 @@
       color: var(--primary-blue);
     }
     
-    /* Боты */
-    .bots-section {
-      margin-bottom: 2rem;
-      display: none; /* Секция скрыта по умолчанию, будет показана когда есть ключ */
-    }
-    
-    .bots-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-    }
-    
-    .bot-card {
-      background-color: var(--white);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border-color);
-      transition: var(--transition-md);
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .bot-card:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .bot-header {
-      background-color: var(--bg-blue-light);
-      padding: 1.5rem;
+    .api-key-actions {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-    }
-    
-    .bot-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: var(--gradient-blue);
-      display: flex;
-      justify-content: center;
       align-items: center;
-      color: var(--white);
-      font-size: 1.5rem;
-      box-shadow: var(--shadow-sm);
+      margin-top: 1rem;
     }
     
-    .bot-menu-button {
-      background: none;
-      border: none;
-      color: var(--text-gray);
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: var(--radius-md);
-      transition: var(--transition-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .bot-menu-button:hover {
-      background-color: rgba(255, 255, 255, 0.5);
-      color: var(--text-dark);
-    }
-    
-    .bot-info {
-      padding: 1.5rem;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .bot-name {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    
-    .bot-description {
+    .api-key-status {
       color: var(--text-gray);
       font-size: 0.875rem;
-      margin-bottom: 1.25rem;
-      flex: 1;
-    }
-    
-    .bot-status {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--text-gray);
-      margin-bottom: 1.25rem;
     }
-    
+
     .status-indicator {
       width: 8px;
       height: 8px;
@@ -531,107 +449,6 @@
     
     .status-inactive {
       background-color: #ef4444;
-    }
-    
-    .bot-actions {
-      display: flex;
-      gap: 0.75rem;
-    }
-    
-    .bot-action-btn {
-      flex: 1;
-      padding: 0.6rem 0.75rem;
-      text-align: center;
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: var(--transition-sm);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    
-    .action-configure {
-      background-color: var(--bg-blue-light);
-      color: var(--primary-blue);
-      border: 1px solid var(--primary-blue-light);
-    }
-    
-    .action-configure:hover {
-      background-color: var(--primary-blue-light);
-      color: var(--white);
-    }
-    
-    .action-embed {
-      background-color: var(--bg-light);
-      color: var(--text-gray);
-      border: 1px solid var(--border-color);
-    }
-    
-    .action-embed:hover {
-      background-color: var(--text-light);
-      color: var(--white);
-      border-color: var(--text-light);
-    }
-    
-    .add-bot-card {
-      background-color: var(--white);
-      border-radius: var(--radius-lg);
-      border: 2px dashed var(--border-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2.5rem 2rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      height: 100%;
-      min-height: 250px;
-    }
-    
-    .add-bot-card:hover {
-      background-color: var(--bg-blue-light);
-      border-color: var(--primary-blue-light);
-    }
-    
-    .add-icon {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background-color: var(--bg-blue-light);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: var(--primary-blue);
-      font-size: 2rem;
-      margin-bottom: 1.25rem;
-      transition: var(--transition-md);
-    }
-    
-    .add-bot-card:hover .add-icon {
-      background-color: var(--white);
-      transform: scale(1.1);
-    }
-    
-    .add-bot-text {
-      font-weight: 600;
-      color: var(--text-gray);
-      text-align: center;
-      transition: var(--transition-sm);
-    }
-    
-    .add-bot-card:hover .add-bot-text {
-      color: var(--primary-blue);
-    }
-    
-    .add-bot-subtext {
-      color: var(--text-light);
-      font-size: 0.875rem;
-      text-align: center;
-      margin-top: 0.5rem;
     }
     
     /* Кнопки */
@@ -667,124 +484,44 @@
       background-color: var(--border-color);
     }
     
-    /* Модальное окно для создания бота */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(15, 23, 42, 0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      visibility: hidden;
-      opacity: 0;
-      transition: all 0.3s;
-    }
-    
-    .modal-overlay.visible {
-      visibility: visible;
-      opacity: 1;
-    }
-    
-    .modal-content {
+    /* Секция для уведомления */
+    .info-notice {
       background-color: var(--white);
       border-radius: var(--radius-lg);
-      width: 100%;
-      max-width: 550px;
-      box-shadow: var(--shadow-lg);
-      transform: translateY(-20px);
-      transition: transform 0.3s;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    
-    .modal-overlay.visible .modal-content {
-      transform: translateY(0);
-    }
-    
-    .modal-header {
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+      text-align: center;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      padding: 1.5rem;
-      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 2.5rem;
     }
     
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
-    
-    .modal-close {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.25rem;
-      color: var(--text-gray);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
-      transition: var(--transition-sm);
-    }
-    
-    .modal-close:hover {
-      background-color: var(--bg-light);
-      color: var(--text-dark);
-    }
-    
-    .modal-body {
-      padding: 1.5rem;
-    }
-    
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
-      padding: 1.5rem;
-      border-top: 1px solid var(--border-color);
-    }
-    
-    /* Формы */
-    .form-group {
+    .notice-icon {
+      font-size: 3rem;
       margin-bottom: 1.5rem;
     }
     
-    .form-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
+    .notice-icon.success {
+      color: #10b981;
     }
     
-    .form-control {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      font-size: 0.95rem;
-      transition: var(--transition-sm);
+    .notice-icon.info {
+      color: var(--primary-blue);
     }
     
-    .form-control:focus {
-      outline: none;
-      border-color: var(--primary-blue-light);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    .notice-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
     }
     
-    textarea.form-control {
-      min-height: 120px;
-      resize: vertical;
-    }
-    
-    .form-hint {
-      margin-top: 0.5rem;
-      font-size: 0.875rem;
+    .notice-description {
       color: var(--text-gray);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
     }
     
     /* Уведомление */
@@ -859,71 +596,9 @@
       justify-content: center;
     }
     
-    /* Пустое состояние */
-    .empty-state {
-      background-color: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border-color);
-      padding: 3rem 2rem;
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-    
-    .empty-icon {
-      font-size: 3rem;
-      color: var(--text-light);
-      margin-bottom: 1.5rem;
-    }
-    
-    .empty-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-    }
-    
-    .empty-description {
-      color: var(--text-gray);
-      max-width: 500px;
-      margin: 0 auto 2rem;
-    }
-    
-    /* Секция для неактивированных пользователей */
-    .activation-notice {
-      background-color: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border-color);
-      padding: 2rem;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 2rem;
-    }
-    
-    .activation-icon {
-      font-size: 3rem;
-      color: var(--primary-blue);
-      margin-bottom: 1.5rem;
-    }
-    
-    .activation-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-    
-    .activation-description {
-      color: var(--text-gray);
-      max-width: 600px;
-      margin: 0 auto 2rem;
-      line-height: 1.6;
-    }
-    
     /* Адаптивный дизайн */
     @media (max-width: 1024px) {
-      .bots-grid {
+      .stats-grid {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       }
     }
@@ -964,12 +639,10 @@
     }
     
     @media (max-width: 480px) {
-      .bots-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .bot-actions {
+      .api-key-actions {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
       }
     }
   </style>
@@ -1111,95 +784,47 @@
               <i class="fas fa-eye"></i>
             </button>
           </div>
-          <button type="submit" class="btn btn-primary">Сохранить</button>
+          <button type="submit" class="btn btn-primary" id="save-api-key-btn">Сохранить</button>
         </form>
+        
+        <!-- Статус API ключа -->
+        <div class="api-key-actions" id="api-key-status" style="display: none;">
+          <div class="api-key-status">
+            <div class="status-indicator status-active"></div>
+            <span>API ключ активен</span>
+          </div>
+          <button class="btn btn-secondary" id="edit-api-key-btn">
+            <i class="fas fa-edit"></i> Изменить ключ
+          </button>
+        </div>
       </div>
       
-      <!-- Секция для пользователей без API ключа -->
-      <div class="activation-notice" id="activation-notice">
-        <div class="activation-icon">
+      <!-- Уведомление для пользователей без API ключа -->
+      <div class="info-notice" id="no-key-notice">
+        <div class="notice-icon info">
           <i class="fas fa-key"></i>
         </div>
-        <h3 class="activation-title">Активируйте возможности платформы</h3>
-        <p class="activation-description">
+        <h3 class="notice-title">Активируйте возможности платформы</h3>
+        <p class="notice-description">
           Чтобы создавать голосовых ассистентов и использовать все функции платформы, вам необходимо добавить ключ OpenAI API в настройках выше. После добавления ключа вы сможете создавать ботов, настраивать их и встраивать на свой сайт.
         </p>
       </div>
       
-      <!-- Секция ботов (скрыта по умолчанию) -->
-      <div class="bots-section" id="bots-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-robot"></i> Мои голосовые ассистенты
-          </h2>
+      <!-- Уведомление для пользователей с API ключом -->
+      <div class="info-notice" id="has-key-notice" style="display: none;">
+        <div class="notice-icon success">
+          <i class="fas fa-check-circle"></i>
         </div>
-        
-        <div class="bots-grid" id="bots-grid">
-          <!-- Сюда будут добавляться боты динамически -->
-          
-          <!-- Кнопка добавления бота -->
-          <div class="add-bot-card" id="add-bot-button">
-            <div class="add-icon">
-              <i class="fas fa-plus"></i>
-            </div>
-            <div class="add-bot-text">Создать нового бота</div>
-            <div class="add-bot-subtext">Настройте системный промпт, голос и базу знаний</div>
-          </div>
-        </div>
-        
-        <!-- Пустое состояние (скрыто по умолчанию) -->
-        <div class="empty-state" id="empty-state" style="display: none;">
-          <div class="empty-icon">
-            <i class="fas fa-robot"></i>
-          </div>
-          <h3 class="empty-title">У вас пока нет голосовых ассистентов</h3>
-          <p class="empty-description">
-            Создайте своего первого голосового ассистента, настройте его и встройте на свой сайт.
-          </p>
-          <button class="btn btn-primary" id="empty-state-add-bot">
-            <i class="fas fa-plus"></i> Создать нового бота
-          </button>
-        </div>
+        <h3 class="notice-title">Вы готовы к созданию ассистентов!</h3>
+        <p class="notice-description">
+          Вы успешно добавили API ключ OpenAI. Теперь вы можете создавать голосовых ассистентов в разделе "Мои агенты", настраивать их и встраивать на свой сайт или приложение.
+        </p>
+        <a href="/static/agents.html" class="btn btn-primary">
+          <i class="fas fa-robot"></i> Перейти к созданию ассистентов
+        </a>
       </div>
     </div>
   </main>
-  
-  <!-- Модальное окно для создания бота -->
-  <div class="modal-overlay" id="create-bot-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Создать нового бота</h3>
-        <button class="modal-close" id="close-modal-button">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      
-      <div class="modal-body">
-        <form id="create-bot-form">
-          <div class="form-group">
-            <label for="bot-name">Название бота</label>
-            <input type="text" id="bot-name" class="form-control" placeholder="Например: Бот поддержки" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="bot-description">Описание (опционально)</label>
-            <input type="text" id="bot-description" class="form-control" placeholder="Кратко опишите назначение бота">
-          </div>
-          
-          <div class="form-group">
-            <label for="bot-prompt">Системный промпт</label>
-            <textarea id="bot-prompt" class="form-control" placeholder="Инструкции для ассистента">Ты умный голосовой помощник. Отвечай на вопросы пользователя коротко, информативно и с небольшой ноткой юмора, когда это уместно. Стремись быть полезным и предоставлять точную информацию.</textarea>
-            <div class="form-hint">Задайте инструкции для вашего ассистента. Это определит его знания, стиль общения и поведение.</div>
-          </div>
-        </form>
-      </div>
-      
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancel-bot-button">Отмена</button>
-        <button type="button" class="btn btn-primary" id="submit-bot-button">Создать</button>
-      </div>
-    </div>
-  </div>
   
   <!-- Уведомление -->
   <div class="notification" id="notification">
@@ -1227,27 +852,21 @@
       const dropdownLogout = document.getElementById('dropdown-logout');
       const apiKeyForm = document.getElementById('api-key-form');
       const apiKeyInput = document.getElementById('api-key-input');
+      const saveApiKeyBtn = document.getElementById('save-api-key-btn');
       const togglePasswordButton = document.getElementById('toggle-password');
-      const addBotButton = document.getElementById('add-bot-button');
-      const emptyStateAddBot = document.getElementById('empty-state-add-bot');
-      const createBotModal = document.getElementById('create-bot-modal');
-      const closeModalButton = document.getElementById('close-modal-button');
-      const cancelBotButton = document.getElementById('cancel-bot-button');
-      const submitBotButton = document.getElementById('submit-bot-button');
-      const createBotForm = document.getElementById('create-bot-form');
+      const editApiKeyBtn = document.getElementById('edit-api-key-btn');
+      const apiKeyStatus = document.getElementById('api-key-status');
       const notification = document.getElementById('notification');
       const notificationMessage = document.getElementById('notification-message');
       const notificationClose = document.getElementById('notification-close');
-      const emptyState = document.getElementById('empty-state');
-      const botsSection = document.getElementById('bots-section');
-      const botsGrid = document.getElementById('bots-grid');
       const welcomeMessage = document.getElementById('welcome-message');
       const userName = document.getElementById('user-name');
       const userAvatar = document.getElementById('user-avatar');
       const botsCount = document.getElementById('bots-count');
       const interactionsCount = document.getElementById('interactions-count');
       const filesCount = document.getElementById('files-count');
-      const activationNotice = document.getElementById('activation-notice');
+      const noKeyNotice = document.getElementById('no-key-notice');
+      const hasKeyNotice = document.getElementById('has-key-notice');
       const agentsNavItem = document.getElementById('agents-nav-item');
       const knowledgeNavItem = document.getElementById('knowledge-nav-item');
       const integrationsLink = document.getElementById('integrations-link');
@@ -1255,6 +874,8 @@
       
       // Состояние приложения
       let hasApiKey = false;
+      let actualApiKey = null;
+      let isEditingKey = false;
       
       // API клиент
       const api = {
@@ -1340,16 +961,6 @@
         // Получение списка ботов
         getAssistants() {
           return this.get('/assistants');
-        },
-        
-        // Создание нового бота
-        createAssistant(assistantData) {
-          return this.post('/assistants', assistantData);
-        },
-        
-        // Получение кода для встраивания
-        getEmbedCode(assistantId) {
-          return this.get(`/assistants/${assistantId}/embed-code`);
         }
       };
       
@@ -1389,139 +1000,28 @@
           notification.classList.remove('show');
         },
         
-        // Показать модальное окно
-        showModal() {
-          if (!hasApiKey) {
-            this.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
-            return;
-          }
-          
-          createBotModal.classList.add('visible');
-          document.body.style.overflow = 'hidden';
-        },
-        
-        // Скрыть модальное окно
-        hideModal() {
-          createBotModal.classList.remove('visible');
-          document.body.style.overflow = '';
-          
-          // Сбрасываем форму
-          createBotForm.reset();
-        },
-        
-        // Отображение списка ботов
-        renderBots(bots) {
-          // Обновляем счетчик ботов
-          botsCount.textContent = bots.length;
-          
-          // Если нет ботов, показываем пустое состояние
-          if (bots.length === 0) {
-            emptyState.style.display = 'block';
-            botsGrid.style.display = 'none';
-            return;
-          }
-          
-          // Иначе показываем сетку ботов
-          emptyState.style.display = 'none';
-          botsGrid.style.display = 'grid';
-          
-          // Получаем все текущие карточки ботов
-          const existingBots = botsGrid.querySelectorAll('.bot-card');
-          existingBots.forEach(card => card.remove());
-          
-          // Добавляем карточки для всех ботов
-          bots.forEach(bot => {
-            const botCard = document.createElement('div');
-            botCard.className = 'bot-card';
-            botCard.innerHTML = `
-              <div class="bot-header">
-                <div class="bot-icon">
-                  <i class="fas fa-robot"></i>
-                </div>
-                <button class="bot-menu-button">
-                  <i class="fas fa-ellipsis-v"></i>
-                </button>
-              </div>
-              <div class="bot-info">
-                <h3 class="bot-name">${bot.name}</h3>
-                <p class="bot-description">${bot.description || 'Нет описания'}</p>
-                <div class="bot-status">
-                  <div class="status-indicator ${bot.is_active ? 'status-active' : 'status-inactive'}"></div>
-                  ${bot.is_active ? 'Активен' : 'Неактивен'}
-                </div>
-                <div class="bot-actions">
-                  <button class="bot-action-btn action-configure" data-id="${bot.id}">
-                    <i class="fas fa-cog"></i> Настроить
-                  </button>
-                  <button class="bot-action-btn action-embed" data-id="${bot.id}">
-                    <i class="fas fa-code"></i> Встроить
-                  </button>
-                </div>
-              </div>
-            `;
-            
-            // Добавляем перед кнопкой добавления
-            botsGrid.insertBefore(botCard, addBotButton);
-          });
-          
-          // Добавляем обработчики кнопкам
-          this.setupBotActions();
-        },
-        
-        // Установка обработчиков для кнопок ботов
-        setupBotActions() {
-          // Кнопки настройки
-          document.querySelectorAll('.action-configure').forEach(button => {
-            button.addEventListener('click', function() {
-              const botId = this.getAttribute('data-id');
-              window.location.href = `/static/agents.html?id=${botId}`;
-            });
-          });
-          
-          // Кнопки встраивания
-          document.querySelectorAll('.action-embed').forEach(button => {
-            button.addEventListener('click', async function() {
-              const botId = this.getAttribute('data-id');
-              
-              try {
-                const embedData = await api.getEmbedCode(botId);
-                
-                // Копируем код в буфер обмена
-                const textarea = document.createElement('textarea');
-                textarea.value = embedData.embed_code;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                
-                ui.showNotification('Код для встраивания скопирован в буфер обмена!');
-              } catch (error) {
-                ui.showNotification(error.message, 'error');
-              }
-            });
-          });
-        },
-        
         // Разблокировка функций после добавления API ключа
         unlockFeatures() {
           hasApiKey = true;
           
-          // Показываем секцию с ботами
-          botsSection.style.display = 'block';
+          // Показываем уведомление для пользователей с ключом
+          noKeyNotice.style.display = 'none';
+          hasKeyNotice.style.display = 'flex';
           
-          // Скрываем уведомление об активации
-          activationNotice.style.display = 'none';
+          // Показываем статус API ключа
+          apiKeyStatus.style.display = 'flex';
+          
+          // Скрываем форму ввода
+          apiKeyForm.style.display = 'none';
           
           // Разблокируем пункты меню
           const lockedFeatures = [
             agentsNavItem,
-            knowledgeNavItem,
-            integrationsLink,
-            skillsLink
+            knowledgeNavItem
           ];
           
           lockedFeatures.forEach(element => {
-            element.classList.remove('locked-feature');
+            if (element) element.classList.remove('locked-feature');
           });
         },
         
@@ -1529,17 +1029,45 @@
         lockFeatures() {
           hasApiKey = false;
           
-          // Скрываем секцию с ботами
-          botsSection.style.display = 'none';
+          // Показываем уведомление для пользователей без ключа
+          noKeyNotice.style.display = 'flex';
+          hasKeyNotice.style.display = 'none';
           
-          // Показываем уведомление об активации
-          activationNotice.style.display = 'flex';
+          // Скрываем статус API ключа
+          apiKeyStatus.style.display = 'none';
+          
+          // Показываем форму ввода
+          apiKeyForm.style.display = 'flex';
           
           // Блокируем пункты меню
           agentsNavItem.classList.add('locked-feature');
           knowledgeNavItem.classList.add('locked-feature');
           integrationsLink.classList.add('locked-feature');
           skillsLink.classList.add('locked-feature');
+        },
+        
+        // Режим просмотра API ключа
+        viewKeyMode() {
+          isEditingKey = false;
+          apiKeyForm.style.display = 'none';
+          apiKeyStatus.style.display = 'flex';
+        },
+        
+        // Режим редактирования API ключа
+        editKeyMode() {
+          isEditingKey = true;
+          apiKeyStatus.style.display = 'none';
+          apiKeyForm.style.display = 'flex';
+          
+          // Если есть ключ, показываем его в поле ввода
+          if (actualApiKey) {
+            apiKeyInput.value = actualApiKey;
+            apiKeyInput.type = 'text';
+            togglePasswordButton.querySelector('i').className = 'fas fa-eye-slash';
+          } else {
+            apiKeyInput.value = '';
+            apiKeyInput.placeholder = 'Введите API ключ OpenAI';
+          }
         }
       };
       
@@ -1582,70 +1110,44 @@
           
           // Если у пользователя есть API ключ
           if (userData.openai_api_key) {
-            // Маскируем ключ в поле ввода
-            apiKeyInput.value = '•'.repeat(20);
-            apiKeyInput.placeholder = 'API ключ сохранен';
+            // Сохраняем ключ в памяти (для возможности показа)
+            actualApiKey = userData.openai_api_key;
+            
+            // Включаем режим просмотра ключа
+            ui.viewKeyMode();
             
             // Разблокируем дополнительные функции
             ui.unlockFeatures();
             
-            // Загружаем ботов
-            loadBots();
+            // Загружаем статистику
+            loadStats();
           } else {
             // Если ключа нет, блокируем функции
             ui.lockFeatures();
           }
         } catch (error) {
           console.error('Ошибка при загрузке данных пользователя:', error);
+          ui.showNotification('Не удалось загрузить данные пользователя', 'error');
         }
       }
       
-      // Загрузка списка ботов
-      async function loadBots() {
+      // Загрузка статистики
+      async function loadStats() {
         if (!hasApiKey) return;
         
         try {
+          // Получаем список ботов для подсчета
           const bots = await api.getAssistants();
-          ui.renderBots(bots);
-        } catch (error) {
-          console.error('Ошибка при загрузке ботов:', error);
-          ui.showNotification('Не удалось загрузить список ботов', 'error');
-        }
-      }
-      
-      // Создание нового бота
-      async function createBot() {
-        if (!hasApiKey) {
-          ui.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
-          return;
-        }
-        
-        const name = document.getElementById('bot-name').value;
-        const description = document.getElementById('bot-description').value;
-        const systemPrompt = document.getElementById('bot-prompt').value;
-        
-        if (!name) {
-          ui.showNotification('Укажите название бота', 'error');
-          return;
-        }
-        
-        try {
-          const botData = {
-            name,
-            description,
-            system_prompt: systemPrompt,
-            voice: 'alloy',
-            language: 'ru'
-          };
+          botsCount.textContent = bots.length;
           
-          await api.createAssistant(botData);
-          ui.showNotification('Бот успешно создан!');
-          ui.hideModal();
+          // Здесь можно добавить загрузку других статистических данных
+          // из API, когда они будут доступны
           
-          // Обновляем список ботов
-          loadBots();
+          // Пока используем заглушки
+          interactionsCount.textContent = '0';
+          filesCount.textContent = '0';
         } catch (error) {
-          ui.showNotification(error.message, 'error');
+          console.error('Ошибка при загрузке статистики:', error);
         }
       }
       
@@ -1673,7 +1175,6 @@
       
       // Обработчик для кнопки показать/скрыть пароль
       togglePasswordButton.addEventListener('click', function() {
-        const apiKeyInput = document.getElementById('api-key-input');
         const icon = this.querySelector('i');
         
         // Переключаем тип поля
@@ -1686,6 +1187,11 @@
           icon.className = 'fas fa-eye';
           this.title = 'Показать ключ';
         }
+      });
+      
+      // Кнопка редактирования API ключа
+      editApiKeyBtn.addEventListener('click', function() {
+        ui.editKeyMode();
       });
       
       // Выход из системы
@@ -1704,64 +1210,40 @@
       apiKeyForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const apiKey = apiKeyInput.value;
+        const apiKey = apiKeyInput.value.trim();
         
-        // Если в поле маскированный ключ, пропускаем
-        if (apiKey === '•'.repeat(20)) return;
+        if (!apiKey) {
+          ui.showNotification('Пожалуйста, введите API ключ', 'error');
+          return;
+        }
+        
+        // Если ключ не изменился, просто переключаем режим
+        if (isEditingKey && apiKey === actualApiKey) {
+          ui.viewKeyMode();
+          return;
+        }
         
         try {
           await api.saveApiKey(apiKey);
           
-          ui.showNotification('API ключ успешно сохранен');
+          // Сохраняем ключ в памяти
+          actualApiKey = apiKey;
           
-          // Маскируем ключ в поле ввода
-          apiKeyInput.type = 'password'; // Убеждаемся, что тип поля - password
-          apiKeyInput.value = '•'.repeat(20);
-          apiKeyInput.placeholder = 'API ключ сохранен';
-          togglePasswordButton.querySelector('i').className = 'fas fa-eye'; // Сбрасываем иконку
+          // Переключаем режим
+          ui.viewKeyMode();
+          
+          // Уведомление
+          ui.showNotification('API ключ успешно сохранен');
           
           // Разблокируем дополнительные функции
           ui.unlockFeatures();
           
-          // Загружаем ботов
-          loadBots();
+          // Загружаем статистику
+          loadStats();
         } catch (error) {
-          ui.showNotification(error.message, 'error');
+          ui.showNotification(error.message || 'Ошибка при сохранении ключа', 'error');
         }
       });
-      
-      // Открытие модального окна для создания бота
-      addBotButton.addEventListener('click', function() {
-        if (!hasApiKey) {
-          ui.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
-          return;
-        }
-        ui.showModal();
-      });
-      
-      if (emptyStateAddBot) {
-        emptyStateAddBot.addEventListener('click', function() {
-          if (!hasApiKey) {
-            ui.showNotification('Добавьте API ключ OpenAI для создания ботов', 'info');
-            return;
-          }
-          ui.showModal();
-        });
-      }
-      
-      // Закрытие модального окна
-      closeModalButton.addEventListener('click', ui.hideModal);
-      cancelBotButton.addEventListener('click', ui.hideModal);
-      
-      // Закрытие модального окна при клике вне него
-      createBotModal.addEventListener('click', function(e) {
-        if (e.target === createBotModal) {
-          ui.hideModal();
-        }
-      });
-      
-      // Создание бота
-      submitBotButton.addEventListener('click', createBot);
       
       // Закрытие уведомления
       notificationClose.addEventListener('click', ui.hideNotification);
@@ -1778,8 +1260,6 @@
       
       // Инициализация страницы
       if (checkAuth()) {
-        // Предустановка состояния интерфейса
-        ui.lockFeatures();
         loadUserData();
       }
     });
