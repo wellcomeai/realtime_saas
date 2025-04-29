@@ -1,21 +1,28 @@
 services:
   - type: web
-    name: wellcomeai-backend
+    name: wellcomeai
     env: python
-    pythonVersion: 3.9.16
-    buildCommand: |
-      python3 -m venv venv
-      . venv/bin/activate
-      pip install --upgrade pip
-      pip install -r server/requirements.txt
-    startCommand: |
-      cd server
-      uvicorn main:app --host 0.0.0.0 --port $PORT
+    region: frankfurt  # Выберите регион, наиболее близкий к вашим пользователям
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:$PORT main:app
     envVars:
-      - key: PORT
-        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
       - key: HOST_URL
         fromService:
-          name: wellcomeai-backend
           type: web
-          property: url
+          name: wellcomeai
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wellcomeai-db
+          property: connectionString
+
+databases:
+  - name: wellcomeai-db
+    region: frankfurt
+    plan: free  # Можно изменить на paid, если нужно больше ресурсов
