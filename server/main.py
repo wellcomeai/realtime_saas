@@ -487,7 +487,38 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }
     return user_dict
-
+@app.put("/api/users/me")
+async def update_current_user(
+    user_update: UserUpdate, 
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """Обновление информации о текущем пользователе"""
+    # Получаем пользователя из базы данных
+    user = db.query(User).filter(User.id == current_user.id).first()
+    
+    # Обновляем данные
+    user_data = user_update.dict(exclude_unset=True)
+    for key, value in user_data.items():
+        setattr(user, key, value)
+    
+    # Сохраняем изменения
+    db.commit()
+    db.refresh(user)
+    
+    # Возвращаем обновленные данные пользователя
+    user_dict = {
+        "id": str(user.id),
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "company_name": user.company_name,
+        "openai_api_key": user.openai_api_key,
+        "subscription_plan": user.subscription_plan,
+        "google_sheets_authorized": user.google_sheets_authorized,
+        "created_at": user.created_at.isoformat() if user.created_at else None
+    }
+    return user_dict
 # API для управления помощниками
 @app.post("/api/assistants", status_code=201)
 async def create_assistant(assistant: AssistantCreate, current_user: User = Depends(get_current_user), db = Depends(get_db)):
