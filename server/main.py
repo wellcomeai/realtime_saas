@@ -1161,10 +1161,10 @@ async def forward_client_to_openai(client_ws: WebSocket, openai_ws, client_id: i
                     client_connections[client_id]["conversation"]["user_message"] = data["transcript"]
                 
                 # Проверяем состояние соединения с OpenAI перед отправкой
-                if not openai_ws or openai_ws.closed:
-                    logger.error(f"Соединение с OpenAI закрыто или отсутствует для клиента {client_id}")
+                if not openai_ws:
+                    logger.error(f"Соединение с OpenAI отсутствует для клиента {client_id}")
                     raise websockets.exceptions.ConnectionClosed(
-                        1006, "Соединение с OpenAI закрыто или отсутствует"
+                        1006, "Соединение с OpenAI отсутствует"
                     )
                 
                 # Отправляем сообщение в OpenAI с обработкой ошибок
