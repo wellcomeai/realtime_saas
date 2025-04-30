@@ -314,30 +314,30 @@ def create_tables():
     except Exception as e:
         logger.error(f"Ошибка при создании таблиц: {str(e)}")
 
-# Вспомогательные функции для WebSocket и OpenAI API
 async def create_openai_connection(api_key=None):
     """
     Создание нового соединения с OpenAI API с улучшенной обработкой ошибок.
-    Добавлена расширенная обработка ошибок и улучшенные параметры соединения.
     """
     try:
         key_to_use = api_key or OPENAI_API_KEY
         if not key_to_use:
             raise ValueError("API ключ OpenAI не предоставлен")
             
-        # Добавляем больше заголовков и увеличиваем буферы для надежности
+        # Используем правильную передачу заголовков для websockets 15.0.1
+        headers = [
+            ("Authorization", f"Bearer {key_to_use}"),
+            ("OpenAI-Beta", "realtime=v1"),
+            ("User-Agent", "WellcomeAI/1.0")
+        ]
+        
+        # Увеличенные буферы для более надежной передачи аудио
         openai_ws = await websockets.connect(
             REALTIME_WS_URL,
-            extra_headers={
-                "Authorization": f"Bearer {key_to_use}",
-                "OpenAI-Beta": "realtime=v1",
-                "User-Agent": "WellcomeAI/1.0"  # Добавляем User-Agent
-            },
-            # Увеличенные буферы для более надежной передачи аудио
+            additional_headers=headers,  # Используем additional_headers вместо extra_headers
             max_size=15 * 1024 * 1024,  # 15MB max message size
             ping_interval=20,
             ping_timeout=60,
-            close_timeout=10  # Добавляем таймаут для закрытия
+            close_timeout=10
         )
         logger.info("Создано новое соединение с OpenAI")
         return openai_ws
