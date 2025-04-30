@@ -1,131 +1,94 @@
 /**
- * WellcomeAI Widget - Клиентский виджет для SaaS голосового помощника
- * Версия: 1.0
+ * WellcomeAI Widget Loader Script
+ * Версия: 1.0.2
  * 
  * Этот скрипт динамически создает и встраивает виджет голосового ассистента
- * на любой сайт, используя WebSocket соединение для общения с серверной частью.
- * 
- * Для встраивания на сайт используйте:
- * <script src="https://your-domain.com/static/widget.js" data-assistant-id="YOUR_ASSISTANT_ID" async></script>
+ * на любой сайт, в том числе на Tilda и другие конструкторы сайтов.
  */
 
 (function() {
-  // Конфигурация по умолчанию
-  const DEFAULT_CONFIG = {
-    position: 'bottom-right',         // Положение виджета на странице
-    primaryColor: '#4a86e8',          // Основной цвет
-    secondaryColor: '#2b59c3',        // Дополнительный цвет
-    title: 'WellcomeAI',              // Заголовок виджета в раскрытом состоянии
-    initialState: 'collapsed',         // Начальное состояние: 'collapsed' или 'expanded'
-    language: 'ru',                   // Язык по умолчанию
-    welcomeMessage: 'Привет! Чем я могу помочь?',  // Приветственное сообщение
-    zIndex: 2147483647,              // z-index для виджета (максимальное значение)
-    size: 'normal',                   // Размер виджета: 'small', 'normal', 'large'
-    hideAfterInactivity: 300000,      // Время в мс перед автоскрытием (5 минут), 0 - никогда
-    activationEvents: ['click'],      // События активации: 'click', 'hover'
-    showBranding: true                // Показывать брендинг WellcomeAI
+  // Функция для определения URL сервера
+  const getServerUrl = () => {
+    // Сначала проверяем, есть ли атрибут data-server на скрипте
+    const scriptTags = document.querySelectorAll('script');
+    let serverUrl = null;
+    
+    // Ищем скрипт, который загрузил текущий файл или содержит data-server
+    for (let i = 0; i < scriptTags.length; i++) {
+      // Если нашли скрипт с data-server
+      if (scriptTags[i].hasAttribute('data-server')) {
+        serverUrl = scriptTags[i].getAttribute('data-server');
+        break;
+      }
+      
+      // Если нет data-server, ищем скрипт виджета
+      const src = scriptTags[i].getAttribute('src');
+      if (src && src.includes('widget.js')) {
+        try {
+          const url = new URL(src, window.location.href);
+          serverUrl = url.origin;
+          break;
+        } catch (e) {
+          // Если src относительный, используем текущий домен
+          if (src.startsWith('/')) {
+            serverUrl = window.location.origin;
+            break;
+          }
+        }
+      }
+    }
+    
+    // Если не нашли, используем текущий домен (для локальной отладки)
+    if (!serverUrl) {
+      console.log('WellcomeAI Widget: Unable to determine server URL from script tag, using current origin');
+      serverUrl = window.location.origin;
+    }
+    
+    return serverUrl.replace(/\/$/, ''); // Убираем конечный слеш, если есть
   };
 
-  // Получение ID ассистента из атрибута скрипта
-  function getAssistantId() {
-    const scripts = document.getElementsByTagName('script');
-    const currentScript = scripts[scripts.length - 1];
-    const assistantId = currentScript.getAttribute('data-assistant-id');
-    
-    if (!assistantId) {
-      console.error('WellcomeAI: Не указан ID ассистента. Добавьте атрибут data-assistant-id="YOUR_ASSISTANT_ID" в тег скрипта.');
-      return null;
-    }
-    
-    return assistantId;
-  }
-
-  // Получение настроек из атрибутов скрипта
-  function getWidgetConfig() {
-    const scripts = document.getElementsByTagName('script');
-    const currentScript = scripts[scripts.length - 1];
-    
-    const config = {...DEFAULT_CONFIG};
-    
-    // Получаем все data- атрибуты из скрипта
-    const dataAttributes = currentScript.dataset;
-    for (const key in dataAttributes) {
-      if (key !== 'assistantId' && key in DEFAULT_CONFIG) {
-        config[key] = dataAttributes[key];
+  // Функция для получения ID ассистента
+  const getAssistantId = () => {
+    const scriptTags = document.querySelectorAll('script');
+    for (let i = 0; i < scriptTags.length; i++) {
+      if (scriptTags[i].hasAttribute('data-assistantId')) {
+        return scriptTags[i].getAttribute('data-assistantId');
       }
     }
-    
-    // Преобразуем строковые значения в правильные типы
-    if (config.hideAfterInactivity) {
-      config.hideAfterInactivity = parseInt(config.hideAfterInactivity);
-    }
-    if (config.showBranding === 'false') {
-      config.showBranding = false;
-    }
-    if (config.activationEvents && typeof config.activationEvents === 'string') {
-      config.activationEvents = config.activationEvents.split(',').map(e => e.trim());
-    }
-    
-    return config;
-  }
+    return null; // Если не нашли
+  };
+
+  // Определяем URL сервера
+  const SERVER_URL = getServerUrl();
+  const ASSISTANT_ID = getAssistantId();
+  
+  // Формируем WebSocket URL с указанием ID ассистента
+  const WS_URL = SERVER_URL.replace(/^http/, 'ws') + '/ws/' + ASSISTANT_ID;
+  
+  console.log('WellcomeAI Widget: Using server URL:', SERVER_URL);
+  console.log('WellcomeAI Widget: WebSocket URL:', WS_URL);
+  console.log('WellcomeAI Widget: Assistant ID:', ASSISTANT_ID);
 
   // Создаем стили для виджета
-  function createStyles(config) {
+  function createStyles() {
     const styleEl = document.createElement('style');
     styleEl.id = 'wellcomeai-widget-styles';
-    
-    // Определение размеров на основе конфигурации
-    const sizes = {
-      small: {
-        button: '48px',
-        expandedWidth: '280px', 
-        expandedHeight: '350px',
-        circle: '150px',
-        iconSize: '20px'
-      },
-      normal: {
-        button: '60px',
-        expandedWidth: '320px',
-        expandedHeight: '400px',
-        circle: '180px',
-        iconSize: '22px'
-      },
-      large: {
-        button: '70px',
-        expandedWidth: '360px',
-        expandedHeight: '450px',
-        circle: '200px',
-        iconSize: '26px'
-      }
-    };
-    
-    const size = sizes[config.size] || sizes.normal;
-    
-    // Позиционирование на основе конфигурации
-    const positions = {
-      'bottom-right': 'bottom: 20px; right: 20px;',
-      'bottom-left': 'bottom: 20px; left: 20px;',
-      'top-right': 'top: 20px; right: 20px;',
-      'top-left': 'top: 20px; left: 20px;'
-    };
-    
-    const position = positions[config.position] || positions['bottom-right'];
-    
     styleEl.textContent = `
       .wellcomeai-widget-container {
         position: fixed;
-        ${position}
-        z-index: ${config.zIndex};
+        bottom: 20px;
+        right: 20px;
+        z-index: 2147483647;
         transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+        font-family: 'Segoe UI', 'Roboto', sans-serif;
       }
       
       .wellcomeai-widget-button {
-        width: ${size.button};
-        height: ${size.button};
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, ${config.primaryColor}, ${config.secondaryColor});
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, #4a86e8, #2b59c3);
+        box-shadow: 0 4px 15px rgba(74, 134, 232, 0.4);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -133,13 +96,14 @@
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        z-index: 2147483647;
         border: none;
         outline: none;
       }
       
       .wellcomeai-widget-button:hover {
         transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 20px rgba(74, 134, 232, 0.5);
       }
       
       .wellcomeai-widget-button::before {
@@ -160,7 +124,7 @@
       
       .wellcomeai-widget-icon {
         color: white;
-        font-size: ${size.iconSize};
+        font-size: 22px;
         z-index: 2;
         transition: all 0.3s ease;
       }
@@ -169,7 +133,7 @@
         position: absolute;
         bottom: 0;
         right: 0;
-        width: ${size.expandedWidth};
+        width: 320px;
         height: 0;
         opacity: 0;
         pointer-events: none;
@@ -180,22 +144,23 @@
         transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         display: flex;
         flex-direction: column;
+        z-index: 2147483647;
       }
       
       .wellcomeai-widget-container.active .wellcomeai-widget-expanded {
-        height: ${size.expandedHeight};
+        height: 400px;
         opacity: 1;
         pointer-events: all;
       }
       
       .wellcomeai-widget-container.active .wellcomeai-widget-button {
         transform: scale(0.9);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 10px rgba(74, 134, 232, 0.3);
       }
       
       .wellcomeai-widget-header {
         padding: 15px 20px;
-        background: linear-gradient(135deg, ${config.primaryColor}, ${config.secondaryColor});
+        background: linear-gradient(135deg, #4a86e8, #2b59c3);
         color: white;
         display: flex;
         justify-content: space-between;
@@ -236,10 +201,10 @@
       }
       
       .wellcomeai-main-circle {
-        width: ${size.circle};
-        height: ${size.circle};
+        width: 180px;
+        height: 180px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #ffffff, #e1f5fe, ${config.primaryColor});
+        background: linear-gradient(135deg, #ffffff, #e1f5fe, #4a86e8);
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         position: relative;
         overflow: hidden;
@@ -334,7 +299,7 @@
       }
       
       .wellcomeai-mic-icon {
-        color: ${config.primaryColor};
+        color: #4a86e8;
         font-size: 32px;
         z-index: 10;
       }
@@ -369,7 +334,7 @@
       .wellcomeai-audio-bar {
         width: 3px;
         height: 2px;
-        background-color: ${config.primaryColor};
+        background-color: #4a86e8;
         border-radius: 1px;
         transition: height 0.1s ease;
       }
@@ -384,7 +349,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 1000;
+        z-index: 2147483646;
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s;
@@ -401,7 +366,7 @@
         height: 40px;
         border: 3px solid rgba(74, 134, 232, 0.3);
         border-radius: 50%;
-        border-top-color: ${config.primaryColor};
+        border-top-color: #4a86e8;
         animation: wellcomeai-spin 1s linear infinite;
       }
       
@@ -433,62 +398,6 @@
         opacity: 1;
       }
       
-      .wellcomeai-welcome-message {
-        position: absolute;
-        max-width: 220px;
-        background: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-radius: 12px;
-        padding: 10px 15px;
-        font-size: 14px;
-        transition: all 0.3s;
-        opacity: 0;
-        transform: scale(0.9);
-        pointer-events: none;
-      }
-      
-      .wellcomeai-welcome-message.show {
-        opacity: 1;
-        transform: scale(1);
-      }
-      
-      .wellcomeai-welcome-message::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-top: 8px solid white;
-        bottom: -8px;
-        left: calc(50% - 8px);
-      }
-      
-      .wellcomeai-container-${config.position} .wellcomeai-welcome-message {
-        ${config.position.includes('bottom') ? 'bottom: 70px;' : 'top: 70px;'}
-        ${config.position.includes('right') ? 'right: 5px;' : 'left: 5px;'}
-      }
-      
-      .wellcomeai-container-${config.position} .wellcomeai-welcome-message::after {
-        ${config.position.includes('bottom') ? 'bottom: -8px; border-top: 8px solid white; border-bottom: none;' : 'top: -8px; border-bottom: 8px solid white; border-top: none;'}
-      }
-      
-      .wellcomeai-branding {
-        position: absolute;
-        bottom: 5px;
-        right: 10px;
-        font-size: 10px;
-        color: #aaa;
-        text-decoration: none;
-        opacity: 0.7;
-        transition: opacity 0.2s;
-      }
-      
-      .wellcomeai-branding:hover {
-        opacity: 1;
-        color: ${config.primaryColor};
-      }
-      
       @keyframes wellcomeai-button-pulse {
         0% { box-shadow: 0 0 0 0 rgba(74, 134, 232, 0.7); }
         70% { box-shadow: 0 0 0 10px rgba(74, 134, 232, 0); }
@@ -498,33 +407,7 @@
       .wellcomeai-pulse-animation {
         animation: wellcomeai-button-pulse 2s infinite;
       }
-      
-      /* Мобильные стили */
-      @media (max-width: 480px) {
-        .wellcomeai-widget-expanded {
-          width: 100vw;
-          max-width: 100vw;
-          height: 100vh;
-          max-height: 100vh;
-          position: fixed;
-          left: 0;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          border-radius: 0;
-        }
-        
-        .wellcomeai-widget-header {
-          border-radius: 0;
-        }
-        
-        .wellcomeai-widget-container.active .wellcomeai-widget-button {
-          transform: scale(0);
-          opacity: 0;
-        }
-      }
     `;
-    
     document.head.appendChild(styleEl);
   }
 
@@ -540,9 +423,9 @@
   }
 
   // Создание HTML структуры виджета
-  function createWidgetHTML(config) {
+  function createWidgetHTML() {
     const widgetContainer = document.createElement('div');
-    widgetContainer.className = `wellcomeai-widget-container wellcomeai-container-${config.position}`;
+    widgetContainer.className = 'wellcomeai-widget-container';
     widgetContainer.id = 'wellcomeai-widget-container';
 
     widgetContainer.innerHTML = `
@@ -551,15 +434,10 @@
         <i class="fas fa-robot wellcomeai-widget-icon"></i>
       </div>
       
-      <!-- Приветственное сообщение -->
-      <div class="wellcomeai-welcome-message" id="wellcomeai-welcome-message">
-        ${config.welcomeMessage}
-      </div>
-      
       <!-- Развернутый виджет -->
       <div class="wellcomeai-widget-expanded" id="wellcomeai-widget-expanded">
         <div class="wellcomeai-widget-header">
-          <div class="wellcomeai-widget-title">${config.title}</div>
+          <div class="wellcomeai-widget-title">WellcomeAI</div>
           <button class="wellcomeai-widget-close" id="wellcomeai-widget-close">
             <i class="fas fa-times"></i>
           </button>
@@ -577,8 +455,6 @@
           
           <!-- Сообщение -->
           <div class="wellcomeai-message-display" id="wellcomeai-message-display"></div>
-          
-          ${config.showBranding ? `<a href="https://wellcome-ai.ru" target="_blank" class="wellcomeai-branding">Powered by WellcomeAI</a>` : ''}
         </div>
       </div>
       
@@ -589,31 +465,24 @@
     `;
 
     document.body.appendChild(widgetContainer);
-    
-    return widgetContainer;
   }
 
   // Основная логика виджета
-  function initWidget(assistantId, config) {
-    // Проверка параметров
-    if (!assistantId) {
-      console.error('WellcomeAI: ID ассистента не указан');
+  function initWidget() {
+    // Проверяем, что ID ассистента существует
+    if (!ASSISTANT_ID) {
+      console.error('WellcomeAI Widget: Assistant ID not found. Please add data-assistantId attribute to the script tag.');
       return;
     }
-    
-    // Создание виджета
-    loadFontAwesome();
-    createStyles(config);
-    const widgetContainer = createWidgetHTML(config);
-    
+
     // Элементы UI
+    const widgetContainer = document.getElementById('wellcomeai-widget-container');
     const widgetButton = document.getElementById('wellcomeai-widget-button');
     const widgetClose = document.getElementById('wellcomeai-widget-close');
     const mainCircle = document.getElementById('wellcomeai-main-circle');
     const audioBars = document.getElementById('wellcomeai-audio-bars');
     const loaderModal = document.getElementById('wellcomeai-loader-modal');
     const messageDisplay = document.getElementById('wellcomeai-message-display');
-    const welcomeMessage = document.getElementById('wellcomeai-welcome-message');
     
     // Переменные для обработки аудио
     let audioChunksBuffer = [];
@@ -630,12 +499,6 @@
     let audioProcessor = null;
     let isConnected = false;
     let isWidgetOpen = false;
-    let inactivityTimer = null;
-    
-    // Определяем текущий хост
-    const currentScript = document.currentScript || document.querySelector('script[data-assistant-id]');
-    const scriptSrc = currentScript ? currentScript.src : '';
-    const hostUrl = scriptSrc ? new URL(scriptSrc).origin : window.location.origin;
     
     // Конфигурация для оптимизации потока аудио
     const AUDIO_CONFIG = {
@@ -647,9 +510,8 @@
     
     // Функция логирования
     function log(message, level = 'info') {
-      if (window.console && window.console.log) {
-        console.log(`[WellcomeAI ${level.toUpperCase()}] ${message}`);
-      }
+      const timestamp = new Date().toLocaleTimeString();
+      console.log(`[WellcomeAI ${level.toUpperCase()}] ${message}`);
     }
     
     // Создаем аудио-бары для визуализации
@@ -704,8 +566,6 @@
     
     // Показать сообщение
     function showMessage(message, duration = 5000) {
-      if (!message) return;
-      
       messageDisplay.textContent = message;
       messageDisplay.classList.add('show');
       
@@ -714,25 +574,10 @@
       }, duration);
     }
     
-    // Показать приветственное сообщение
-    function showWelcomeMessage(delay = 1000) {
-      setTimeout(() => {
-        welcomeMessage.classList.add('show');
-        
-        // Скрыть через 5 секунд
-        setTimeout(() => {
-          welcomeMessage.classList.remove('show');
-        }, 5000);
-      }, delay);
-    }
-    
     // Открыть виджет
     function openWidget() {
       widgetContainer.classList.add('active');
       isWidgetOpen = true;
-      
-      // Скрываем приветственное сообщение если оно показано
-      welcomeMessage.classList.remove('show');
       
       // Запускаем прослушивание при открытии
       if (isConnected && !isListening && !isPlayingAudio && !reconnecting) {
@@ -741,12 +586,6 @@
       
       // Убираем пульсацию с кнопки
       widgetButton.classList.remove('wellcomeai-pulse-animation');
-      
-      // Сбрасываем таймер неактивности
-      resetInactivityTimer();
-      
-      // Отправляем событие аналитики
-      sendAnalyticsEvent('widget_opened');
     }
     
     // Закрыть виджет
@@ -757,9 +596,6 @@
       // Скрываем виджет
       widgetContainer.classList.remove('active');
       isWidgetOpen = false;
-      
-      // Отправляем событие аналитики
-      sendAnalyticsEvent('widget_closed');
     }
     
     // Инициализация микрофона и AudioContext
@@ -850,9 +686,6 @@
                 audioDataStartTime = Date.now();
                 log("Начало записи аудиоданных");
               }
-              
-              // Сбрасываем таймер неактивности
-              resetInactivityTimer();
               
             } catch (error) {
               log(`Ошибка отправки аудио: ${error.message}`, "error");
@@ -955,9 +788,6 @@
       // Начинаем обработку и сбрасываем флаги
       hasAudioData = false;
       audioDataStartTime = 0;
-      
-      // Отправляем событие аналитики
-      sendAnalyticsEvent('audio_sent');
     }
     
     // Преобразование ArrayBuffer в Base64
@@ -1103,6 +933,8 @@
       
       isPlayingAudio = true;
       
+      isPlayingAudio = true;
+      
       // Активируем визуальное состояние говорения
       mainCircle.classList.add('speaking');
       mainCircle.classList.remove('listening');
@@ -1145,10 +977,6 @@
           URL.revokeObjectURL(audioUrl);
           playNextAudio(); // В случае ошибки переходим к следующему аудио
         };
-        
-        // Сбрасываем таймер неактивности при воспроизведении
-        resetInactivityTimer();
-        
       } catch (error) {
         log(`Ошибка воспроизведения аудио: ${error.message}`, "error");
         playNextAudio(); // В случае ошибки переходим к следующему аудио
@@ -1159,13 +987,16 @@
     async function connectWebSocket() {
       try {
         loaderModal.classList.add('active');
-        log("Подключение к серверу...");
+        log("Подключение...");
         
-        // Используем WebSocket-соединение с сервером
-        const protocol = hostUrl.startsWith('https:') ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${new URL(hostUrl).host}/ws/${assistantId}`;
+        // Проверяем наличие ID ассистента
+        if (!ASSISTANT_ID) {
+          throw new Error("ID ассистента не указан");
+        }
         
-        log(`Подключение к ${wsUrl}`);
+        // Используем настроенный WebSocket URL с ID ассистента
+        const wsUrl = WS_URL;
+        log(`Connecting to WebSocket at: ${wsUrl}`);
         
         // Создаем новое WebSocket соединение
         websocket = new WebSocket(wsUrl);
@@ -1184,18 +1015,10 @@
           isConnected = true;
           loaderModal.classList.remove('active');
           
-          // Показываем приветственное сообщение, если виджет не раскрыт
-          if (!isWidgetOpen && config.welcomeMessage) {
-            showWelcomeMessage();
-          }
-          
           // Автоматически начинаем слушать если виджет открыт
           if (isWidgetOpen) {
             startListening();
           }
-          
-          // Отправляем событие аналитики
-          sendAnalyticsEvent('connected');
         };
         
         websocket.onmessage = function(event) {
@@ -1215,9 +1038,6 @@
                 if (!isWidgetOpen) {
                   widgetButton.classList.add('wellcomeai-pulse-animation');
                 }
-                
-                // Сбрасываем таймер неактивности
-                resetInactivityTimer();
               }
             }
             // Обработка аудио
@@ -1242,17 +1062,14 @@
                   startListening();
                 }, 300);
               }
-              
-              // Отправляем событие аналитики
-              sendAnalyticsEvent('response_received');
             }
           } catch (error) {
             log(`Ошибка обработки сообщения: ${error.message}`, "error");
           }
         };
         
-        websocket.onclose = function() {
-          log("Соединение закрыто");
+        websocket.onclose = function(event) {
+          log(`Соединение закрыто: ${event.code} ${event.reason}`);
           isConnected = false;
           isListening = false;
           reconnecting = false;
@@ -1266,19 +1083,15 @@
           setTimeout(() => {
             connectWebSocket();
           }, 3000);
-          
-          // Отправляем событие аналитики
-          sendAnalyticsEvent('disconnected');
         };
         
         websocket.onerror = function(error) {
           log("Ошибка соединения", "error");
+          console.error("WebSocket error:", error);
+          
           if (isWidgetOpen) {
             showMessage("Ошибка соединения с сервером");
           }
-          
-          // Отправляем событие аналитики
-          sendAnalyticsEvent('connection_error');
         };
         
         return true;
@@ -1326,95 +1139,43 @@
         mainCircle.classList.add('listening');
         mainCircle.classList.remove('speaking');
       }
-      
-      // Отправляем событие аналитики
-      sendAnalyticsEvent('listening_started');
-    }
-    
-    // Таймер автоматического скрытия виджета при неактивности
-    function resetInactivityTimer() {
-      // Очищаем текущий таймер
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-      }
-      
-      // Если настроен таймаут неактивности и виджет открыт
-      if (config.hideAfterInactivity > 0 && isWidgetOpen) {
-        inactivityTimer = setTimeout(() => {
-          closeWidget();
-        }, config.hideAfterInactivity);
-      }
-    }
-    
-    // Отправка событий аналитики на сервер (если потребуется)
-    function sendAnalyticsEvent(eventType, data = {}) {
-      // Формируем данные события
-      const eventData = {
-        event_type: eventType,
-        assistant_id: assistantId,
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-        referrer: document.referrer,
-        user_agent: navigator.userAgent,
-        ...data
-      };
-      
-      // В текущей версии просто логируем, но можно расширить для отправки на сервер
-      log(`Аналитика: ${eventType}`, "debug");
-      
-      // Для будущего использования - отправка на сервер
-      /*
-      fetch(`${hostUrl}/api/analytics/event`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(eventData),
-        keepalive: true
-      }).catch(e => {
-        // Ignore errors to not impact user experience
-      });
-      */
     }
 
     // Добавляем обработчики событий для интерфейса
     widgetButton.addEventListener('click', openWidget);
     widgetClose.addEventListener('click', closeWidget);
     
-    // Обработчик для основного круга (микрофона)
+    // Обработчик для основного круга (для запуска распознавания голоса)
     mainCircle.addEventListener('click', function() {
-      if (!isListening && !isPlayingAudio && isConnected) {
+      if (isWidgetOpen && !isListening && !isPlayingAudio && !reconnecting) {
         startListening();
       }
     });
     
-    // Настройка начального состояния
-    if (config.initialState === 'expanded') {
-      setTimeout(() => {
-        openWidget();
-      }, 1000);
-    }
-    
     // Создаем WebSocket соединение
     connectWebSocket();
-    
-    // Отправляем событие инициализации
-    sendAnalyticsEvent('widget_initialized');
   }
 
-  // Точка входа
-  function initialize() {
-    const assistantId = getAssistantId();
-    if (!assistantId) return;
+  // Инициализируем виджет
+  function initializeWidget() {
+    // Загружаем необходимые стили и скрипты
+    loadFontAwesome();
+    createStyles();
     
-    const config = getWidgetConfig();
-    initWidget(assistantId, config);
+    // Создаем HTML структуру виджета
+    createWidgetHTML();
+    
+    // Инициализируем основную логику виджета
+    initWidget();
   }
   
-  // Проверяем, загружен ли DOM
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    initialize();
+  // Проверяем, есть ли уже виджет на странице
+  if (!document.getElementById('wellcomeai-widget-container')) {
+    // Если DOM уже загружен, инициализируем сразу
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeWidget);
+    } else {
+      initializeWidget();
+    }
   }
 })();
