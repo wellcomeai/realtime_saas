@@ -54,6 +54,13 @@ DEFAULT_SYSTEM_MESSAGE = (
 )
 JWT_SECRET = os.getenv('JWT_SECRET_KEY', 'change-this-in-production')
 
+# Расширенные настройки для улучшения надежности WebSocket
+WS_PING_INTERVAL = 20  # Интервал между ping (в секундах)
+WS_PING_TIMEOUT = 60   # Таймаут для ping (в секундах)
+WS_CLOSE_TIMEOUT = 30  # Таймаут для закрытия соединения (в секундах)
+WS_MAX_MSG_SIZE = 15 * 1024 * 1024  # Максимальный размер сообщения (15MB)
+MAX_RECONNECT_ATTEMPTS = 5  # Максимальное количество попыток переподключения
+
 # Настройка PostgreSQL
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -175,6 +182,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]  # Добавлено: раскрытие всех заголовков
 )
 
 # Проверка наличия директории static и создание базового index.html
@@ -330,14 +338,14 @@ async def create_openai_connection(api_key=None):
             ("User-Agent", "WellcomeAI/1.0")
         ]
         
-        # Увеличенные буферы для более надежной передачи аудио
+        # Используем увеличенные значения таймаутов для более надежного соединения
         openai_ws = await websockets.connect(
             REALTIME_WS_URL,
-            additional_headers=headers,  # Используем additional_headers вместо extra_headers
-            max_size=15 * 1024 * 1024,  # 15MB max message size
-            ping_interval=20,
-            ping_timeout=60,
-            close_timeout=10
+            additional_headers=headers,
+            max_size=WS_MAX_MSG_SIZE,
+            ping_interval=WS_PING_INTERVAL,
+            ping_timeout=WS_PING_TIMEOUT,
+            close_timeout=WS_CLOSE_TIMEOUT
         )
         logger.info("Создано новое соединение с OpenAI")
         return openai_ws
@@ -829,7 +837,7 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
     Реализует механизм повторного подключения к OpenAI API при сбоях соединения.
     """
     client_id = id(websocket)
-    max_reconnect_attempts = 3
+    max_reconnect_attempts = MAX_RECONNECT_ATTEMPTS
     reconnect_attempt = 0
     
     logger.info(f"Начало обработки WebSocket соединения для клиента {client_id} с ассистентом {assistant_id}")
@@ -837,6 +845,18 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
     # Принимаем соединение вне основного цикла
     await websocket.accept()
     logger.info(f"Соединение с клиентом {client_id} принято")
+    
+    # Отправляем "рукопожатие" для проверки жизнеспособности соединения
+    try:
+        await websocket.send_json({
+            "type": "connection_status",
+            "status": "handshake",
+            "message": "Подключение установлено"
+        })
+    except Exception as e:
+        logger.error(f"Ошибка при отправке начального рукопожатия: {str(e)}")
+        # Если не можем отправить даже первое сообщение, завершаем соединение
+        return
     
     while reconnect_attempt <= max_reconnect_attempts:
         try:
@@ -902,6 +922,7 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                 "assistant_id": str(assistant_id),
                 "tasks": [],     # Для хранения задач
                 "reconnecting": False,  # Флаг, указывающий на пересоздание соединения
+                "last_ping_time": time.time(),  # Время последнего ping
                 "conversation": {
                     "user_message": "",
                     "assistant_message": "",
@@ -947,16 +968,17 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                     functions=assistant.functions
                 )
                 
-                # Создаем две задачи для двустороннего обмена сообщениями
+                # Создаем три задачи: две для обмена сообщениями и одну для heartbeat
                 client_to_openai = asyncio.create_task(forward_client_to_openai(websocket, openai_ws, client_id))
                 openai_to_client = asyncio.create_task(forward_openai_to_client(openai_ws, websocket, client_id, db))
+                heartbeat_task = asyncio.create_task(heartbeat_check(websocket, client_id))
                 
                 # Сохраняем задачи для возможности отмены
-                client_connections[client_id]["tasks"] = [client_to_openai, openai_to_client]
+                client_connections[client_id]["tasks"] = [client_to_openai, openai_to_client, heartbeat_task]
                 
                 # Ждем, пока одна из задач не завершится
                 done, pending = await asyncio.wait(
-                    [client_to_openai, openai_to_client],
+                    [client_to_openai, openai_to_client, heartbeat_task],
                     return_when=asyncio.FIRST_COMPLETED
                 )
                 
@@ -1091,6 +1113,49 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
     # Очистка ресурсов
     await cleanup_connection(client_id)
 
+# Функция для периодической проверки соединения
+async def heartbeat_check(websocket: WebSocket, client_id: int):
+    """
+    Отправляет периодические пинги клиенту для проверки жизнеспособности соединения.
+    """
+    ping_interval = 15  # Интервал между пингами в секундах
+    
+    try:
+        logger.info(f"Запущена задача проверки соединения для клиента {client_id}")
+        
+        while client_id in client_connections and client_connections[client_id]["active"]:
+            try:
+                # Отправляем ping и ждем pong
+                pong_waiter = await websocket.ping()
+                await asyncio.wait_for(pong_waiter, timeout=5.0)
+                
+                # Обновляем время последнего ping
+                if client_id in client_connections:
+                    client_connections[client_id]["last_ping_time"] = time.time()
+                    logger.debug(f"Heartbeat успешен для клиента {client_id}")
+                
+            except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed) as e:
+                logger.warning(f"Ошибка heartbeat для клиента {client_id}: {str(e)}")
+                # Если нет ответа, соединение потеряно
+                raise websockets.exceptions.ConnectionClosed(
+                    1006, "Соединение потеряно: нет ответа на heartbeat"
+                )
+                
+            except Exception as e:
+                logger.error(f"Ошибка в heartbeat для клиента {client_id}: {str(e)}")
+                # Не прерываем цикл для других ошибок, просто логируем
+            
+            # Ждем до следующей проверки
+            await asyncio.sleep(ping_interval)
+            
+    except websockets.exceptions.ConnectionClosed:
+        logger.warning(f"Соединение закрыто в heartbeat_check для клиента {client_id}")
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка в задаче heartbeat_check для клиента {client_id}: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+
 async def cleanup_connection(client_id: int):
     """Очистка ресурсов при завершении соединения"""
     logger.info(f"Очистка ресурсов для клиента {client_id}")
@@ -1151,6 +1216,24 @@ async def forward_client_to_openai(client_ws: WebSocket, openai_ws, client_id: i
             try:
                 data = json.loads(message)
                 msg_type = data.get("type", "unknown")
+                
+                # Обработка ping-сообщений для поддержания соединения
+                if msg_type == "ping":
+                    try:
+                        # Отвечаем pong для подтверждения активности соединения
+                        await client_ws.send_json({
+                            "type": "pong",
+                            "timestamp": time.time()
+                        })
+                        
+                        # Обновляем время последнего ping
+                        if client_id in client_connections:
+                            client_connections[client_id]["last_ping_time"] = time.time()
+                            
+                        # Не пересылаем ping-сообщения в OpenAI
+                        continue
+                    except Exception as e:
+                        logger.error(f"Ошибка отправки pong-ответа: {str(e)}")
                 
                 # Не логируем аппенд аудио буфера для уменьшения шума в логах
                 if msg_type != "input_audio_buffer.append":
@@ -1436,6 +1519,12 @@ async def widget_page():
             content=f"<html><body><h1>Ошибка</h1><p>{str(e)}</p></body></html>",
             status_code=500
         )
+
+# Проверка соединения для тестирования
+@app.get("/api/healthcheck")
+async def healthcheck():
+    """Эндпоинт для проверки работоспособности сервера"""
+    return {"status": "ok", "timestamp": time.time()}
 
 # Событие при запуске приложения
 @app.on_event("startup")
