@@ -1122,53 +1122,64 @@
     }
     
     // Функция для отправки аудиобуфера
-    function commitAudioBuffer() {
-      if (!isListening || !websocket || websocket.readyState !== WebSocket.OPEN || isReconnecting) return;
-      
-      // Проверяем, есть ли в буфере достаточно аудиоданных
-      if (!hasAudioData) {
-        widgetLog("Не отправляем пустой аудиобуфер", "warn");
-        return;
-      }
-      
-      // Проверяем минимальную длительность аудио (300мс требуется для корректной работы)
-      const audioLength = Date.now() - audioDataStartTime;
-      if (audioLength < minimumAudioLength) {
-        widgetLog(`Аудиобуфер слишком короткий (${audioLength}мс), ожидаем больше данных`, "warn");
-        
-        // Продолжаем запись еще немного времени
-        setTimeout(() => {
-          // Повторно пытаемся отправить буфер
-          if (isListening && hasAudioData && !isReconnecting) {
-            widgetLog(`Отправка аудиобуфера после дополнительной записи (${Date.now() - audioDataStartTime}мс)`);
-            sendCommitBuffer();
-          }
-        }, minimumAudioLength - audioLength + 50); // Добавляем небольшой запас
-        
-        return;
-      }
-      
-      // Если все проверки пройдены, отправляем буфер
-      sendCommitBuffer();
-    }
+    fufunction commitAudioBuffer() {
+  if (!isListening || !websocket || websocket.readyState !== WebSocket.OPEN || reconnecting) return;
+  
+  // Проверяем, есть ли в буфере достаточно аудиоданных
+  if (!hasAudioData) {
+    log("Не отправляем пустой аудиобуфер", "warn");
+    return;
+  }
+  
+  // Проверяем минимальную длительность аудио (300мс требуется для корректной работы)
+  const audioLength = Date.now() - audioDataStartTime;
+  if (audioLength < minimumAudioLength) {
+    log(`Аудиобуфер слишком короткий (${audioLength}мс), ожидаем больше данных`, "warn");
     
+    // Продолжаем запись еще немного времени
+    setTimeout(() => {
+      // Повторно пытаемся отправить буфер
+      if (isListening && hasAudioData && !reconnecting) {
+        log(`Отправка аудиобуфера после дополнительной записи (${Date.now() - audioDataStartTime}мс)`);
+        sendCommitBuffer();
+      }
+    }, minimumAudioLength - audioLength + 50); // Добавляем небольшой запас
+    
+    return;
+  }
+  
+  // Если все проверки пройдены, отправляем буфер
+  sendCommitBuffer();
+}
     // Функция для фактической отправки буфера
     function sendCommitBuffer() {
-      widgetLog("Отправка аудиобуфера");
-      
-      // Сбрасываем эффект активности
-      mainCircle.classList.remove('listening');
-      
-      // Отправляем команду для завершения буфера
-      websocket.send(JSON.stringify({
-        type: "input_audio_buffer.commit",
-        event_id: `commit_${Date.now()}`
-      }));
-      
-      // Начинаем обработку и сбрасываем флаги
-      hasAudioData = false;
-      audioDataStartTime = 0;
-    }
+  log("Отправка аудиобуфера");
+  
+  // Дополнительная проверка на минимальную длину аудио (100мс требуется для OpenAI)
+  const audioLength = Date.now() - audioDataStartTime;
+  if (audioLength < 100) {
+    log(`Аудиобуфер слишком короткий для OpenAI (${audioLength}мс < 100мс), не отправляем`, "warn");
+    
+    // Начинаем следующий цикл прослушивания
+    hasAudioData = false;
+    audioDataStartTime = 0;
+    
+    return;
+  }
+  
+  // Сбрасываем эффект активности
+  mainCircle.classList.remove('listening');
+  
+  // Отправляем команду для завершения буфера
+  websocket.send(JSON.stringify({
+    type: "input_audio_buffer.commit",
+    event_id: `commit_${Date.now()}`
+  }));
+  
+  // Начинаем обработку и сбрасываем флаги
+  hasAudioData = false;
+  audioDataStartTime = 0;
+}
     
     // Преобразование ArrayBuffer в Base64
     function arrayBufferToBase64(buffer) {
