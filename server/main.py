@@ -1113,7 +1113,6 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
     # Очистка ресурсов
     await cleanup_connection(client_id)
 
-# Функция для периодической проверки соединения
 async def heartbeat_check(websocket: WebSocket, client_id: int):
     """
     Отправляет периодические пинги клиенту для проверки жизнеспособности соединения.
@@ -1125,26 +1124,24 @@ async def heartbeat_check(websocket: WebSocket, client_id: int):
         
         while client_id in client_connections and client_connections[client_id]["active"]:
             try:
-                # Отправляем ping и ждем pong
-                pong_waiter = await websocket.ping()
-                await asyncio.wait_for(pong_waiter, timeout=5.0)
+                # Отправляем ping-сообщение через WebSocket
+                await websocket.send_json({
+                    "type": "ping", 
+                    "timestamp": time.time()
+                })
                 
                 # Обновляем время последнего ping
                 if client_id in client_connections:
                     client_connections[client_id]["last_ping_time"] = time.time()
-                    logger.debug(f"Heartbeat успешен для клиента {client_id}")
+                    logger.debug(f"Heartbeat отправлен для клиента {client_id}")
                 
-            except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed) as e:
+            except Exception as e:
                 logger.warning(f"Ошибка heartbeat для клиента {client_id}: {str(e)}")
                 # Если нет ответа, соединение потеряно
                 raise websockets.exceptions.ConnectionClosed(
-                    1006, "Соединение потеряно: нет ответа на heartbeat"
+                    1006, "Соединение потеряно: ошибка при отправке ping"
                 )
                 
-            except Exception as e:
-                logger.error(f"Ошибка в heartbeat для клиента {client_id}: {str(e)}")
-                # Не прерываем цикл для других ошибок, просто логируем
-            
             # Ждем до следующей проверки
             await asyncio.sleep(ping_interval)
             
@@ -1155,7 +1152,6 @@ async def heartbeat_check(websocket: WebSocket, client_id: int):
         logger.error(f"Ошибка в задаче heartbeat_check для клиента {client_id}: {str(e)}")
         logger.error(traceback.format_exc())
         raise
-
 async def cleanup_connection(client_id: int):
     """Очистка ресурсов при завершении соединения"""
     logger.info(f"Очистка ресурсов для клиента {client_id}")
