@@ -1,6 +1,6 @@
 /**
  * WellcomeAI Widget Loader Script
- * Версия: 1.0.3
+ * Версия: 1.0.4
  * 
  * Этот скрипт динамически создает и встраивает виджет голосового ассистента
  * на любой сайт, в том числе на Tilda и другие конструкторы сайтов.
@@ -25,6 +25,7 @@
       const src = scriptTags[i].getAttribute('src');
       if (src && src.includes('widget.js')) {
         try {
+          // Используем URL API для корректного построения абсолютного URL
           const url = new URL(src, window.location.href);
           serverUrl = url.origin;
           console.log('WellcomeAI Widget: Extracted server URL from script src:', serverUrl);
@@ -42,10 +43,16 @@
       }
     }
     
-    // Если не нашли, используем текущий домен (для локальной отладки)
+    // Проверяем, содержит ли URL протокол
+    if (serverUrl && !serverUrl.match(/^https?:\/\//)) {
+      serverUrl = window.location.protocol + '//' + serverUrl;
+      console.log('WellcomeAI Widget: Added protocol to server URL:', serverUrl);
+    }
+    
+    // Если не нашли, используем fallback URL (хостинг Render)
     if (!serverUrl) {
-      console.log('WellcomeAI Widget: Unable to determine server URL from script tag, using current origin');
-      serverUrl = window.location.origin;
+      serverUrl = 'https://realtime-saas.onrender.com';
+      console.log('WellcomeAI Widget: Using fallback server URL:', serverUrl);
     }
     
     return serverUrl.replace(/\/$/, ''); // Убираем конечный слеш, если есть
@@ -414,6 +421,39 @@
       .wellcomeai-pulse-animation {
         animation: wellcomeai-button-pulse 2s infinite;
       }
+
+      .wellcomeai-connection-error {
+        color: #ef4444;
+        background-color: rgba(254, 226, 226, 0.8);
+        border: 1px solid #ef4444;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 10px;
+        text-align: center;
+        display: none;
+      }
+      
+      .wellcomeai-connection-error.visible {
+        display: block;
+      }
+
+      .wellcomeai-retry-button {
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+        margin-top: 8px;
+        transition: all 0.2s;
+      }
+      
+      .wellcomeai-retry-button:hover {
+        background-color: #dc2626;
+      }
     `;
     document.head.appendChild(styleEl);
   }
@@ -463,6 +503,14 @@
           
           <!-- Сообщение -->
           <div class="wellcomeai-message-display" id="wellcomeai-message-display"></div>
+          
+          <!-- Сообщение об ошибке соединения -->
+          <div class="wellcomeai-connection-error" id="wellcomeai-connection-error">
+            Ошибка соединения с сервером
+            <button class="wellcomeai-retry-button" id="wellcomeai-retry-button">
+              Повторить подключение
+            </button>
+          </div>
         </div>
       </div>
       
@@ -485,6 +533,10 @@
       return;
     }
 
+    // Добавляем переменные для управления переподключением
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+
     // Элементы UI
     const widgetContainer = document.getElementById('wellcomeai-widget-container');
     const widgetButton = document.getElementById('wellcomeai-widget-button');
@@ -493,6 +545,8 @@
     const audioBars = document.getElementById('wellcomeai-audio-bars');
     const loaderModal = document.getElementById('wellcomeai-loader-modal');
     const messageDisplay = document.getElementById('wellcomeai-message-display');
+    const connectionError = document.getElementById('wellcomeai-connection-error');
+    const retryButton = document.getElementById('wellcomeai-retry-button');
     
     // Проверка элементов
     if (!widgetButton || !widgetClose || !mainCircle || !audioBars || !loaderModal || !messageDisplay) {
@@ -515,6 +569,7 @@
     let audioProcessor = null;
     let isConnected = false;
     let isWidgetOpen = false;
+    let connectionFailedPermanently = false;
     
     // Конфигурация для оптимизации потока аудио
     const AUDIO_CONFIG = {
@@ -585,9 +640,31 @@
       messageDisplay.textContent = message;
       messageDisplay.classList.add('show');
       
-      setTimeout(() => {
-        messageDisplay.classList.remove('show');
-      }, duration);
+      if (duration > 0) {
+        setTimeout(() => {
+          messageDisplay.classList.remove('show');
+        }, duration);
+      }
+    }
+
+    // Скрыть сообщение
+    function hideMessage() {
+      messageDisplay.classList.remove('show');
+    }
+    
+    // Показать ошибку соединения
+    function showConnectionError(message) {
+      if (connectionError) {
+        connectionError.querySelector('span').textContent = message || 'Ошибка соединения с сервером';
+        connectionError.classList.add('visible');
+      }
+    }
+    
+    // Скрыть ошибку соединения
+    function hideConnectionError() {
+      if (connectionError) {
+        connectionError.classList.remove('visible');
+      }
     }
     
     // Открыть виджет
@@ -610,9 +687,19 @@
         expandedWidget.style.zIndex = "2147483647";
       }
       
-      // Запускаем прослушивание при открытии
+      // Показываем сообщение о проблеме с подключением, если оно есть
+      if (connectionFailedPermanently) {
+        showConnectionError('Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.');
+        return;
+      }
+      
+      // Запускаем прослушивание при открытии, если соединение активно
       if (isConnected && !isListening && !isPlayingAudio && !reconnecting) {
         startListening();
+      } else if (!isConnected && !reconnecting) {
+        // Если соединение не активно и не находимся в процессе переподключения,
+        // пытаемся подключиться снова
+        connectWebSocket();
       } else {
         console.log('WellcomeAI Widget: Cannot start listening yet:', {
           isConnected, isListening, isPlayingAudio, reconnecting
@@ -633,6 +720,10 @@
       // Скрываем виджет
       widgetContainer.classList.remove('active');
       isWidgetOpen = false;
+      
+      // Скрываем сообщения и ошибки
+      hideMessage();
+      hideConnectionError();
       
       // Принудительно скрываем расширенный виджет
       const expandedWidget = document.getElementById('wellcomeai-widget-expanded');
@@ -1036,6 +1127,9 @@
         loaderModal.classList.add('active');
         log("Подключение...");
         
+        // Скрываем ошибку соединения, если она была показана
+        hideConnectionError();
+        
         // Проверяем наличие ID ассистента
         if (!ASSISTANT_ID) {
           console.error('WellcomeAI Widget: Assistant ID not found!');
@@ -1044,6 +1138,9 @@
           loaderModal.classList.remove('active');
           return false;
         }
+        
+        // Устанавливаем флаг переподключения
+        reconnecting = true;
         
         // Используем настроенный WebSocket URL с ID ассистента
         log(`Connecting to WebSocket at: ${WS_URL}`);
@@ -1056,9 +1153,27 @@
         const connectionTimeout = setTimeout(() => {
           log("Превышено время ожидания соединения", "error");
           console.error('WellcomeAI Widget: Connection timeout!');
-          websocket.close();
+          
+          if (websocket) {
+            websocket.close();
+          }
+          
+          reconnecting = false;
           loaderModal.classList.remove('active');
-          showMessage("Не удалось подключиться к серверу. Проверьте соединение.");
+          
+          // Увеличиваем счетчик попыток и проверяем максимальное количество
+          reconnectAttempts++;
+          
+          if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            connectionFailedPermanently = true;
+            
+            if (isWidgetOpen) {
+              showConnectionError("Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.");
+            } else {
+              // Если виджет закрыт, добавляем пульсацию на кнопку
+              widgetButton.classList.add('wellcomeai-pulse-animation');
+            }
+          }
         }, 15000);
         
         websocket.onopen = function() {
@@ -1066,7 +1181,13 @@
           log("Соединение установлено");
           console.log('WellcomeAI Widget: WebSocket connection established');
           isConnected = true;
+          reconnecting = false;
+          reconnectAttempts = 0;
+          connectionFailedPermanently = false;
           loaderModal.classList.remove('active');
+          
+          // Скрываем ошибку соединения, если она была показана
+          hideConnectionError();
           
           // Автоматически начинаем слушать если виджет открыт
           if (isWidgetOpen) {
@@ -1086,13 +1207,20 @@
             // Обработка текстового ответа
             else if (data.type === 'response.text.delta') {
               if (data.delta) {
-                showMessage(data.delta, 10000);
+                showMessage(data.delta, 0); // Установим duration = 0, чтобы сообщение не скрывалось автоматически
                 
                 // Если виджет закрыт, добавляем пульсацию на кнопку
                 if (!isWidgetOpen) {
                   widgetButton.classList.add('wellcomeai-pulse-animation');
                 }
               }
+            }
+            // Завершение текста
+            else if (data.type === 'response.text.done') {
+              // После завершения текста, установим таймер на скрытие сообщения
+              setTimeout(() => {
+                hideMessage();
+              }, 5000);
             }
             // Обработка аудио
             else if (data.type === 'response.audio.delta') {
@@ -1129,17 +1257,69 @@
           console.log('WellcomeAI Widget: WebSocket connection closed:', event.code, event.reason);
           isConnected = false;
           isListening = false;
-          reconnecting = false;
+          
+          // Не пытаемся переподключаться, если соединение было закрыто нормально
+          if (event.code === 1000 || event.code === 1001) {
+            reconnecting = false;
+            console.log('WellcomeAI Widget: Clean WebSocket close, not reconnecting');
+            return;
+          }
+          
+          // Проверяем, не превышено ли максимальное количество попыток
+          if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            console.log('WellcomeAI Widget: Maximum reconnection attempts reached');
+            reconnecting = false;
+            connectionFailedPermanently = true;
+            
+            // Показываем сообщение пользователю
+            if (isWidgetOpen) {
+              showConnectionError("Не удалось восстановить соединение. Попробуйте перезагрузить страницу.");
+            } else {
+              // Если виджет закрыт, добавляем пульсацию на кнопку
+              widgetButton.classList.add('wellcomeai-pulse-animation');
+            }
+            return;
+          }
+          
+          reconnecting = true;
           
           // Показываем сообщение пользователю, если виджет открыт
           if (isWidgetOpen) {
-            showMessage("Соединение прервано. Переподключение...");
+            showMessage("Соединение прервано. Переподключение...", 0);
           }
           
-          // Пытаемся переподключиться
+          // Экспоненциальная задержка для переподключения
+          const reconnectDelay = Math.min(30000, Math.pow(2, reconnectAttempts) * 1000);
+          reconnectAttempts++;
+          
+          console.log(`WellcomeAI Widget: Reconnecting in ${reconnectDelay/1000} seconds, attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+          
+          // Пытаемся переподключиться с увеличивающейся задержкой
           setTimeout(() => {
-            connectWebSocket();
-          }, 3000);
+            if (reconnecting) {
+              connectWebSocket().then(() => {
+                if (isConnected) {
+                  reconnectAttempts = 0; // Сбрасываем счетчик при успешном подключении
+                  reconnecting = false;
+                  
+                  if (isWidgetOpen) {
+                    showMessage("Соединение восстановлено");
+                    
+                    // Если виджет открыт, автоматически начинаем слушать
+                    setTimeout(() => {
+                      if (isWidgetOpen && !isListening && !isPlayingAudio) {
+                        startListening();
+                      }
+                    }, 1000);
+                  }
+                } else {
+                  reconnecting = false;
+                }
+              }).catch(() => {
+                reconnecting = false;
+              });
+            }
+          }, reconnectDelay);
         };
         
         websocket.onerror = function(error) {
@@ -1155,8 +1335,21 @@
       } catch (error) {
         log(`Ошибка при установке соединения: ${error.message}`, "error");
         console.error('WellcomeAI Widget: Error connecting to WebSocket:', error);
+        reconnecting = false;
         loaderModal.classList.remove('active');
-        showMessage("Не удалось подключиться к серверу. Проверьте консоль браузера.");
+        
+        // Увеличиваем счетчик попыток и проверяем максимальное количество
+        reconnectAttempts++;
+        
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          connectionFailedPermanently = true;
+          if (isWidgetOpen) {
+            showConnectionError("Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.");
+          }
+        } else {
+          showMessage("Не удалось подключиться к серверу. Попробуйте еще раз.");
+        }
+        
         return false;
       }
     }
@@ -1235,9 +1428,36 @@
       });
       
       if (isWidgetOpen && !isListening && !isPlayingAudio && !reconnecting) {
-        startListening();
+        if (isConnected) {
+          startListening();
+        } else if (connectionFailedPermanently) {
+          showConnectionError("Соединение с сервером отсутствует. Нажмите кнопку 'Повторить подключение'.");
+        } else {
+          // Пытаемся переподключиться
+          connectWebSocket();
+        }
       }
     });
+    
+    // Обработчик для кнопки повторного подключения
+    if (retryButton) {
+      retryButton.addEventListener('click', function() {
+        console.log('WellcomeAI Widget: Retry button clicked');
+        
+        // Сбрасываем счетчик попыток и флаги
+        reconnectAttempts = 0;
+        connectionFailedPermanently = false;
+        
+        // Скрываем сообщение об ошибке
+        hideConnectionError();
+        
+        // Показываем сообщение о повторном подключении
+        showMessage("Попытка подключения...");
+        
+        // Пытаемся подключиться заново
+        connectWebSocket();
+      });
+    }
     
     // Создаем WebSocket соединение
     connectWebSocket();
