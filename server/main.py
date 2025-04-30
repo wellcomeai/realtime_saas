@@ -340,13 +340,13 @@ async def create_openai_connection(api_key=None):
         
         # Используем увеличенные значения таймаутов для более надежного соединения
         openai_ws = await websockets.connect(
-            REALTIME_WS_URL,
-            additional_headers=headers,
-            max_size=WS_MAX_MSG_SIZE,
-            ping_interval=WS_PING_INTERVAL,
-            ping_timeout=WS_PING_TIMEOUT,
-            close_timeout=WS_CLOSE_TIMEOUT
-        )
++        REALTIME_WS_URL,
++        extra_headers=headers,
+         max_size=WS_MAX_MSG_SIZE,
+         ping_interval=WS_PING_INTERVAL,
+         ping_timeout=WS_PING_TIMEOUT,
+         close_timeout=WS_CLOSE_TIMEOUT
+     )
         logger.info("Создано новое соединение с OpenAI")
         return openai_ws
     except websockets.exceptions.InvalidStatusCode as e:
