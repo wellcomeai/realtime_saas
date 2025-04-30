@@ -1516,99 +1516,127 @@
           }
         };
         
-        websocket.onmessage = function(event) {
-          try {
-            // Обработка разных типов данных (текст/бинарные)
-            let data;
-            if (typeof event.data === 'string') {
-              data = JSON.parse(event.data);
-              
-              // Обработка ping/pong для поддержания соединения
-              if (data.type === 'pong') {
-                lastPongTime = Date.now();
-                widgetLog('Получен pong от сервера', 'debug');
-                return;
-              }
-              
-              // Обработка статуса соединения
-              if (data.type === 'connection_status') {
-                widgetLog(`Получен статус соединения: ${data.status} - ${data.message}`);
-                
-                if (data.status === 'connected') {
-                  // Соединение успешно установлено
-                  isConnected = true;
-                  updateConnectionStatus('connected', 'Подключено');
-                } else if (data.status === 'connecting' || data.status === 'reconnecting') {
-                  // В процессе подключения
-                  updateConnectionStatus('connecting', data.message || 'Подключение...');
-                }
-                
-                return;
-              }
-              
-              // Обработка ошибок
-              if (data.type === 'error') {
-                widgetLog(`Ошибка от сервера: ${data.error ? data.error.message : 'Неизвестная ошибка'}`, "error");
-                
-                if (isWidgetOpen) {
-                  showMessage(`Ошибка: ${data.error ? data.error.message : 'Неизвестная ошибка'}`);
-                }
-                
-                return;
-              }
-              
-              // Обработка текстового ответа
-              if (data.type === 'response.text.delta') {
-                if (data.delta) {
-                  showMessage(data.delta, 0); // Установим duration = 0, чтобы сообщение не скрывалось автоматически
-                  
-                  // Если виджет закрыт, добавляем пульсацию на кнопку
-                  if (!isWidgetOpen) {
-                    widgetButton.classList.add('wellcomeai-pulse-animation');
-                  }
-                }
-              }
-              // Завершение текста
-              else if (data.type === 'response.text.done') {
-                // После завершения текста, установим таймер на скрытие сообщения
-                setTimeout(() => {
-                  hideMessage();
-                }, 5000);
-              }
-              // Обработка аудио
-              else if (data.type === 'response.audio.delta') {
-                if (data.delta) {
-                  audioChunksBuffer.push(data.delta);
-                }
-              }
-              // Аудио готово для воспроизведения
-              else if (data.type === 'response.audio.done') {
-                if (audioChunksBuffer.length > 0) {
-                  const fullAudio = audioChunksBuffer.join('');
-                  addAudioToPlaybackQueue(fullAudio);
-                  audioChunksBuffer = [];
-                }
-              }
-              // Ответ завершен
-              else if (data.type === 'response.done') {
-                widgetLog('Response done received');
-                // Начинаем снова слушать автоматически, если виджет открыт
-                if (isWidgetOpen && !isPlayingAudio && !isReconnecting) {
-                  setTimeout(() => {
-                    startListening();
-                  }, 300);
-                }
-              }
-            } else {
-              // Бинарные данные (обычно аудио)
-              // Преобразуем ArrayBuffer в base64
-              const base64Audio = arrayBufferToBase64(event.data);
-              addAudioToPlaybackQueue(base64Audio);
-            }
-          } catch (error) {
-            widgetLog(`Ошибка обработки сообщения: ${error.message}`, "error");
+        // Добавьте или замените этот код в обработчике onmessage в функции connectWebSocket
+websocket.onmessage = function(event) {
+  try {
+    // Обработка возможных бинарных данных
+    if (event.data instanceof Blob) {
+      // Обработка бинарных данных, если нужно
+      log("Получены бинарные данные от сервера");
+      return;
+    }
+    
+    // Проверка на пустое сообщение
+    if (!event.data) {
+      log("Получено пустое сообщение от сервера", "warn");
+      return;
+    }
+
+    // Обработка текстовых сообщений
+    try {
+      const data = JSON.parse(event.data);
+      
+      // Логирование всех типов сообщений для отладки
+      log(`Получено сообщение типа: ${data.type || 'unknown'}`);
+      
+      // Проверка на сообщение session.created и session.updated
+      if (data.type === 'session.created' || data.type === 'session.updated') {
+        log(`Получена информация о сессии: ${data.type}`);
+        // Просто принимаем это сообщение, не требуется особая обработка
+        return;
+      }
+      
+      // Проверка на сообщение connection_status
+      if (data.type === 'connection_status') {
+        log(`Статус соединения: ${data.status} - ${data.message}`);
+        if (data.status === 'connected') {
+          // Соединение установлено, можно начинать слушать
+          isConnected = true;
+          reconnectAttempts = 0;
+          connectionFailedPermanently = false;
+          
+          // Скрываем ошибку соединения, если она была показана
+          hideConnectionError();
+          
+          // Автоматически начинаем слушать если виджет открыт
+          if (isWidgetOpen) {
+            startListening();
           }
-        };
+        }
+        return;
+      }
+      
+      // Обработка ошибок
+      if (data.type === 'error') {
+        log(`Ошибка от сервера: ${data.error ? data.error.message : 'Неизвестная ошибка'}`, "error");
+        showMessage(data.error ? data.error.message : 'Произошла ошибка на сервере', 5000);
+        return;
+      } 
+      
+      // Обработка текстового ответа
+      if (data.type === 'response.text.delta') {
+        if (data.delta) {
+          showMessage(data.delta, 0); // Установим duration = 0, чтобы сообщение не скрывалось автоматически
+          
+          // Если виджет закрыт, добавляем пульсацию на кнопку
+          if (!isWidgetOpen) {
+            widgetButton.classList.add('wellcomeai-pulse-animation');
+          }
+        }
+        return;
+      }
+      
+      // Завершение текста
+      if (data.type === 'response.text.done') {
+        // После завершения текста, установим таймер на скрытие сообщения
+        setTimeout(() => {
+          hideMessage();
+        }, 5000);
+        return;
+      }
+      
+      // Обработка аудио
+      if (data.type === 'response.audio.delta') {
+        if (data.delta) {
+          audioChunksBuffer.push(data.delta);
+        }
+        return;
+      }
+      
+      // Аудио готово для воспроизведения
+      if (data.type === 'response.audio.done') {
+        if (audioChunksBuffer.length > 0) {
+          const fullAudio = audioChunksBuffer.join('');
+          addAudioToPlaybackQueue(fullAudio);
+          audioChunksBuffer = [];
+        }
+        return;
+      }
+      
+      // Ответ завершен
+      if (data.type === 'response.done') {
+        log('Response done received');
+        // Начинаем снова слушать автоматически, если виджет открыт
+        if (isWidgetOpen && !isPlayingAudio && !reconnecting) {
+          setTimeout(() => {
+            startListening();
+          }, 300);
+        }
+        return;
+      }
+      
+      // Если мы дошли до этой точки, у нас неизвестный тип сообщения
+      log(`Неизвестный тип сообщения: ${data.type}`, "warn");
+      
+    } catch (parseError) {
+      // Если не удалось распарсить JSON, просто логируем ошибку
+      log(`Ошибка парсинга JSON: ${parseError.message}`, "warn");
+      log(`Содержимое сообщения: ${event.data.substring(0, 100)}...`, "debug");
+    }
+  } catch (generalError) {
+    log(`Общая ошибка обработки сообщения: ${generalError.message}`, "error");
+  }
+};
         
         websocket.onclose = function(event) {
           widgetLog(`WebSocket connection closed: ${event.code}, ${event.reason}`);
