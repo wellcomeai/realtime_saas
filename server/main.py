@@ -316,7 +316,7 @@ async def create_openai_connection(api_key=None):
             
         openai_ws = await websockets.connect(
             REALTIME_WS_URL,
-            extra_headers={
+            header={  # Изменено с extra_headers на header
                 "Authorization": f"Bearer {key_to_use}",
                 "OpenAI-Beta": "realtime=v1"
             },
