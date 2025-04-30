@@ -379,6 +379,17 @@ async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEF
         logger.error(f"Ошибка при отправке настроек сессии: {str(e)}")
         raise
 
+# Глобальный обработчик исключений
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Глобальный обработчик исключений для логирования ошибок"""
+    logger.error(f"Необработанное исключение: {str(exc)}")
+    logger.error(traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Внутренняя ошибка сервера: {str(exc)}"}
+    )
+
 # API эндпоинты для аутентификации
 @app.post("/api/auth/register", status_code=201)
 async def register_user(user: UserCreate, db = Depends(get_db)):
@@ -516,6 +527,7 @@ async def update_current_user_info(user_update: UserUpdate, current_user: User =
         # Получаем только установленные поля (не None)
         update_data = user_update.dict(exclude_unset=True)
         
+        # Добавляем подробное логирование
         logger.info(f"Обновление пользователя {current_user.id}. Данные: {update_data}")
         
         if not update_data:
@@ -628,10 +640,13 @@ async def get_user_assistants(current_user: User = Depends(get_current_user), db
         logger.error(f"Ошибка при получении списка помощников: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
-@app.get("/api/assistants/{assistant_id}/embed-code")
-async def get_assistant_embed_code(assistant_id: str, current_user: User = Depends(get_current_user), db = Depends(get_db)):
-    """Получение кода для встраивания голосового помощника на сайт"""
+@app.get("/api/assistants/{assistant_id}")
+async def get_assistant(assistant_id: str, current_user: User = Depends(get_current_user), db = Depends(get_db)):
+    """Получение информации о конкретном помощнике"""
     try:
+        # Добавляем логирование
+        logger.info(f"Запрос на получение ассистента с ID: {assistant_id}, пользователь: {current_user.id}")
+        
         # Проверяем, существует ли помощник и принадлежит ли он пользователю
         assistant = db.query(AssistantConfig).filter(
             AssistantConfig.id == assistant_id,
@@ -639,33 +654,33 @@ async def get_assistant_embed_code(assistant_id: str, current_user: User = Depen
         ).first()
         
         if not assistant:
+            logger.error(f"Ассистент не найден: {assistant_id}")
             raise HTTPException(status_code=404, detail="Помощник не найден")
             
-        if not assistant.is_active:
-            raise HTTPException(status_code=400, detail="Этот помощник не активен. Активируйте его перед получением кода встраивания.")
-            
-        # Формируем код для встраивания
-        host = os.getenv('HOST_URL', 'https://realtime-saas.onrender.com')
-        embed_code = f"""<!-- WellcomeAI Голосовой Помощник -->
-<script>
-    (function() {{
-        var script = document.createElement('script');
-        script.src = '{host}/static/widget.js';
-        script.dataset.assistantId = '{assistant_id}';
-        script.dataset.server = '{host}'; // Явное указание сервера
-        script.dataset.position = 'bottom-right'; // Положение виджета
-        script.async = true;
-        document.head.appendChild(script);
-    }})();
-</script>
-<!-- Конец WellcomeAI -->"""
+        # Преобразуем данные для JSON ответа
+        assistant_dict = {
+            "id": str(assistant.id),
+            "user_id": str(assistant.user_id),
+            "name": assistant.name,
+            "description": assistant.description,
+            "system_prompt": assistant.system_prompt,
+            "voice": assistant.voice,
+            "language": assistant.language,
+            "google_sheet_id": assistant.google_sheet_id,
+            "functions": assistant.functions,
+            "is_active": assistant.is_active,
+            "created_at": assistant.created_at.isoformat() if assistant.created_at else None,
+            "updated_at": assistant.updated_at.isoformat() if assistant.updated_at else None
+        }
         
-        return {"embed_code": embed_code}
+        logger.info(f"Данные ассистента успешно получены: {assistant.id}")
+        return assistant_dict
         
     except HTTPException as he:
         raise he
     except Exception as e:
-        logger.error(f"Ошибка при получении кода встраивания: {str(e)}")
+        logger.error(f"Ошибка при получении информации о помощнике: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
 @app.put("/api/assistants/{assistant_id}")
@@ -760,14 +775,15 @@ async def get_assistant_embed_code(assistant_id: str, current_user: User = Depen
             raise HTTPException(status_code=400, detail="Этот помощник не активен. Активируйте его перед получением кода встраивания.")
             
         # Формируем код для встраивания
-        host = os.getenv('HOST_URL', 'https://your-render-app.onrender.com')
+        host = os.getenv('HOST_URL', 'https://realtime-saas.onrender.com')
         embed_code = f"""<!-- WellcomeAI Голосовой Помощник -->
 <script>
     (function() {{
         var script = document.createElement('script');
         script.src = '{host}/static/widget.js';
         script.dataset.assistantId = '{assistant_id}';
-        script.dataset.position = 'bottom-right'; // Положение виджета (bottom-right, bottom-left, top-right, top-left)
+        script.dataset.server = '{host}'; // Явное указание сервера
+        script.dataset.position = 'bottom-right'; // Положение виджета
         script.async = true;
         document.head.appendChild(script);
     }})();
