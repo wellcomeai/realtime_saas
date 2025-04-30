@@ -331,22 +331,22 @@ async def create_openai_connection(api_key=None):
         if not key_to_use:
             raise ValueError("API ключ OpenAI не предоставлен")
             
-        # Используем правильную передачу заголовков для websockets 15.0.1
+        # Заголовки для авторизации в OpenAI API
         headers = [
             ("Authorization", f"Bearer {key_to_use}"),
             ("OpenAI-Beta", "realtime=v1"),
             ("User-Agent", "WellcomeAI/1.0")
         ]
         
-        # Используем увеличенные значения таймаутов для более надежного соединения
+        # Увеличенные буферы для более надежной передачи аудио
         openai_ws = await websockets.connect(
-         REALTIME_WS_URL,
-         extra_headers=headers,
-         max_size=WS_MAX_MSG_SIZE,
-         ping_interval=WS_PING_INTERVAL,
-         ping_timeout=WS_PING_TIMEOUT,
-         close_timeout=WS_CLOSE_TIMEOUT
-     )
+            REALTIME_WS_URL,
+            extra_headers=headers,  # Используем extra_headers вместо additional_headers
+            max_size=15 * 1024 * 1024,  # 15MB max message size
+            ping_interval=30,  # Увеличиваем интервал пинга для большей стабильности
+            ping_timeout=120,  # Увеличиваем таймаут пинга
+            close_timeout=15    # Увеличиваем таймаут закрытия
+        )
         logger.info("Создано новое соединение с OpenAI")
         return openai_ws
     except websockets.exceptions.InvalidStatusCode as e:
