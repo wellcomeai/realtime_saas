@@ -1285,7 +1285,17 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
                         }
                     
                     # Проверяем состояние соединения с клиентом перед отправкой
-                    if client_ws.client_state != websockets.extensions.permessage_deflate.ClientState.OPEN:
+                    # Используем более безопасную проверку без использования ClientState
+                    is_client_connected = True
+                    try:
+                        # Попытка пинга гарантирует, что соединение активно
+                        # Используем короткий таймаут, чтобы не блокировать надолго
+                        pong_waiter = await client_ws.ping()
+                        await asyncio.wait_for(pong_waiter, timeout=0.5)
+                    except (websockets.exceptions.ConnectionClosed, asyncio.TimeoutError, Exception):
+                        is_client_connected = False
+                    
+                    if not is_client_connected:
                         logger.error(f"Соединение с клиентом {client_id} закрыто перед отправкой данных от OpenAI")
                         break
                     
