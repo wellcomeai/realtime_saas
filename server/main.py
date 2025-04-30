@@ -451,6 +451,27 @@ async def login_user(user: UserLogin, db = Depends(get_db)):
         # Создаем и возвращаем JWT токен
         token = create_jwt_token(str(db_user.id))
         
+        # Получаем список помощников пользователя
+        assistants = db.query(AssistantConfig).filter(AssistantConfig.user_id == db_user.id).all()
+        
+        # Преобразуем данные ассистентов для JSON
+        assistants_list = []
+        for assistant in assistants:
+            assistants_list.append({
+                "id": str(assistant.id),
+                "user_id": str(assistant.user_id),
+                "name": assistant.name,
+                "description": assistant.description,
+                "system_prompt": assistant.system_prompt,
+                "voice": assistant.voice,
+                "language": assistant.language,
+                "google_sheet_id": assistant.google_sheet_id,
+                "functions": assistant.functions,
+                "is_active": assistant.is_active,
+                "created_at": assistant.created_at.isoformat() if assistant.created_at else None,
+                "updated_at": assistant.updated_at.isoformat() if assistant.updated_at else None
+            })
+        
         # Преобразуем UUID в строку для JSON
         user_dict = {
             "id": str(db_user.id),
@@ -464,7 +485,7 @@ async def login_user(user: UserLogin, db = Depends(get_db)):
             "created_at": db_user.created_at.isoformat() if db_user.created_at else None
         }
         
-        return {"token": token, "user": user_dict}
+        return {"token": token, "user": user_dict, "assistants": assistants_list}
         
     except HTTPException as he:
         raise he
