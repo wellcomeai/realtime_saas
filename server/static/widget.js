@@ -1,22 +1,63 @@
 /**
  * WellcomeAI Widget Loader Script
- * Версия: 1.0.5
+ * Версия: 1.1.0
  * 
  * Этот скрипт динамически создает и встраивает виджет голосового ассистента
  * на любой сайт, в том числе на Tilda и другие конструкторы сайтов.
  */
 
 (function() {
+  // Настройки виджета
+  const DEBUG_MODE = true; // Установите false в продакшене
+  const MAX_RECONNECT_ATTEMPTS = 5; // Максимальное количество попыток переподключения
+  const PING_INTERVAL = 15000; // Интервал отправки ping (в миллисекундах)
+  const CONNECTION_TIMEOUT = 20000; // Таймаут для установления соединения (в миллисекундах)
+  const MAX_DEBUG_ITEMS = 10; // Максимальное количество записей отладки
+
+  // Глобальное хранение состояния
+  let reconnectAttempts = 0;
+  let pingIntervalId = null;
+  let lastPongTime = Date.now();
+  let isReconnecting = false;
+  let debugQueue = [];
+
   // Функция для логирования состояния виджета
   const widgetLog = (message, type = 'info') => {
     const prefix = '[WellcomeAI Widget]';
+    
+    // Добавляем временную метку к сообщению
+    const timestamp = new Date().toISOString().slice(11, 23);
+    const logMessage = `${timestamp} ${message}`;
+    
+    // Вывод в консоль в зависимости от типа сообщения
     if (type === 'error') {
-      console.error(`${prefix} ERROR:`, message);
+      console.error(`${prefix} ERROR:`, logMessage);
     } else if (type === 'warn') {
-      console.warn(`${prefix} WARNING:`, message);
-    } else {
-      console.log(`${prefix}`, message);
+      console.warn(`${prefix} WARNING:`, logMessage);
+    } else if (DEBUG_MODE || type === 'error') {
+      console.log(`${prefix}`, logMessage);
     }
+    
+    // Добавляем в очередь отладки
+    if (type === 'error' || type === 'warn') {
+      addToDebugQueue(message, type);
+    }
+  };
+
+  // Функция для отслеживания ошибок
+  const addToDebugQueue = (message, type = 'info') => {
+    const timestamp = new Date().toISOString();
+    debugQueue.push({ timestamp, message, type });
+    
+    // Ограничиваем размер очереди
+    if (debugQueue.length > MAX_DEBUG_ITEMS) {
+      debugQueue.shift();
+    }
+  };
+
+  // Получить отладочную информацию в виде строки
+  const getDebugInfo = () => {
+    return debugQueue.map(item => `[${item.timestamp}] ${item.type.toUpperCase()}: ${item.message}`).join('\n');
   };
 
   // Функция для определения URL сервера
@@ -551,6 +592,42 @@
       .wellcomeai-retry-button:hover {
         background-color: #dc2626;
       }
+      
+      .wellcomeai-status-indicator {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11px;
+        color: #64748b;
+        padding: 4px 8px;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      
+      .wellcomeai-status-indicator.show {
+        opacity: 0.8;
+      }
+      
+      .wellcomeai-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #10b981;
+      }
+      
+      .wellcomeai-status-dot.disconnected {
+        background-color: #ef4444;
+      }
+      
+      .wellcomeai-status-dot.connecting {
+        background-color: #f59e0b;
+      }
     `;
     document.head.appendChild(styleEl);
     widgetLog("Styles created and added to head");
@@ -610,6 +687,12 @@
               Повторить подключение
             </button>
           </div>
+          
+          <!-- Индикатор статуса -->
+          <div class="wellcomeai-status-indicator" id="wellcomeai-status-indicator">
+            <div class="wellcomeai-status-dot" id="wellcomeai-status-dot"></div>
+            <span id="wellcomeai-status-text">Подключено</span>
+          </div>
         </div>
       </div>
       
@@ -632,10 +715,6 @@
       return;
     }
 
-    // Добавляем переменные для управления переподключением
-    let reconnectAttempts = 0;
-    const MAX_RECONNECT_ATTEMPTS = 5;
-
     // Элементы UI
     const widgetContainer = document.getElementById('wellcomeai-widget-container');
     const widgetButton = document.getElementById('wellcomeai-widget-button');
@@ -646,6 +725,9 @@
     const messageDisplay = document.getElementById('wellcomeai-message-display');
     const connectionError = document.getElementById('wellcomeai-connection-error');
     const retryButton = document.getElementById('wellcomeai-retry-button');
+    const statusIndicator = document.getElementById('wellcomeai-status-indicator');
+    const statusDot = document.getElementById('wellcomeai-status-dot');
+    const statusText = document.getElementById('wellcomeai-status-text');
     
     // Проверка элементов
     if (!widgetButton || !widgetClose || !mainCircle || !audioBars || !loaderModal || !messageDisplay) {
@@ -660,7 +742,7 @@
     let hasAudioData = false;
     let audioDataStartTime = 0;
     let minimumAudioLength = 300;
-    let reconnecting = false;
+    let isReconnecting = false;
     let isListening = false;
     let websocket = null;
     let audioContext = null;
@@ -669,6 +751,10 @@
     let isConnected = false;
     let isWidgetOpen = false;
     let connectionFailedPermanently = false;
+    let pingInterval = null;
+    let lastPingTime = Date.now();
+    let lastPongTime = Date.now();
+    let connectionTimeout = null;
     
     // Конфигурация для оптимизации потока аудио
     const AUDIO_CONFIG = {
@@ -677,12 +763,6 @@
       bufferCheckInterval: 50,     // Частота проверки буфера (мс)
       soundDetectionThreshold: 0.02 // Чувствительность к звуку
     };
-    
-    // Функция логирования
-    function log(message, level = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      widgetLog(`${message} [${timestamp}]`, level);
-    }
     
     // Создаем аудио-бары для визуализации
     function createAudioBars(count = 20) {
@@ -694,6 +774,33 @@
       }
     }
     createAudioBars();
+    
+    // Обновление индикатора статуса соединения
+    function updateConnectionStatus(status, message) {
+      if (!statusIndicator || !statusDot || !statusText) return;
+      
+      statusText.textContent = message || status;
+      
+      // Удаляем все классы состояния
+      statusDot.classList.remove('connected', 'disconnected', 'connecting');
+      
+      // Добавляем нужный класс
+      if (status === 'connected') {
+        statusDot.classList.add('connected');
+      } else if (status === 'disconnected') {
+        statusDot.classList.add('disconnected');
+      } else {
+        statusDot.classList.add('connecting');
+      }
+      
+      // Показываем индикатор
+      statusIndicator.classList.add('show');
+      
+      // Скрываем через некоторое время
+      setTimeout(() => {
+        statusIndicator.classList.remove('show');
+      }, 3000);
+    }
     
     // Функция для полной остановки всех аудио процессов
     function stopAllAudioProcessing() {
@@ -790,6 +897,7 @@
       
       // Показываем сообщение о повторном подключении
       showMessage("Попытка подключения...");
+      updateConnectionStatus('connecting', 'Подключение...');
       
       // Пытаемся подключиться заново
       connectWebSocket();
@@ -822,14 +930,19 @@
       }
       
       // Запускаем прослушивание при открытии, если соединение активно
-      if (isConnected && !isListening && !isPlayingAudio && !reconnecting) {
+      if (isConnected && !isListening && !isPlayingAudio && !isReconnecting) {
         startListening();
-      } else if (!isConnected && !reconnecting) {
+        updateConnectionStatus('connected', 'Подключено');
+      } else if (!isConnected && !isReconnecting) {
         // Если соединение не активно и не находимся в процессе переподключения,
         // пытаемся подключиться снова
         connectWebSocket();
       } else {
-        widgetLog(`Cannot start listening yet: isConnected=${isConnected}, isListening=${isListening}, isPlayingAudio=${isPlayingAudio}, reconnecting=${reconnecting}`);
+        widgetLog(`Cannot start listening yet: isConnected=${isConnected}, isListening=${isListening}, isPlayingAudio=${isPlayingAudio}, isReconnecting=${isReconnecting}`);
+        
+        if (isReconnecting) {
+          updateConnectionStatus('connecting', 'Переподключение...');
+        }
       }
       
       // Убираем пульсацию с кнопки
@@ -851,6 +964,11 @@
       hideMessage();
       hideConnectionError();
       
+      // Скрываем индикатор статуса
+      if (statusIndicator) {
+        statusIndicator.classList.remove('show');
+      }
+      
       // Принудительно скрываем расширенный виджет
       const expandedWidget = document.getElementById('wellcomeai-widget-expanded');
       if (expandedWidget) {
@@ -863,7 +981,7 @@
     // Инициализация микрофона и AudioContext
     async function initAudio() {
       try {
-        log("Запрос разрешения на доступ к микрофону...");
+        widgetLog("Запрос разрешения на доступ к микрофону...");
         
         // Проверяем поддержку getUserMedia
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -880,11 +998,11 @@
           } 
         });
         
-        log("Доступ к микрофону получен");
+        widgetLog("Доступ к микрофону получен");
         
         // Создаем AudioContext с нужной частотой дискретизации
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-        log(`AudioContext создан с частотой ${audioContext.sampleRate} Гц`);
+        widgetLog(`AudioContext создан с частотой ${audioContext.sampleRate} Гц`);
         
         // Создаем обработчик аудиопотока
         const streamSource = audioContext.createMediaStreamSource(mediaStream);
@@ -895,7 +1013,7 @@
         // Проверяем, доступен ли ScriptProcessorNode
         if (audioContext.createScriptProcessor) {
           audioProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
-          log("Создан ScriptProcessorNode для обработки аудио");
+          widgetLog("Создан ScriptProcessorNode для обработки аудио");
         } else {
           throw new Error("Ваш браузер не поддерживает ScriptProcessorNode");
         }
@@ -908,7 +1026,7 @@
         
         // Обработчик аудио с оптимизированной логикой
         audioProcessor.onaudioprocess = function(e) {
-          if (isListening && websocket && websocket.readyState === WebSocket.OPEN && !reconnecting) {
+          if (isListening && websocket && websocket.readyState === WebSocket.OPEN && !isReconnecting) {
             // Получаем данные с микрофона
             const inputData = e.inputBuffer.getChannelData(0);
             
@@ -946,11 +1064,11 @@
               if (!hasAudioData && hasSound) {
                 hasAudioData = true;
                 audioDataStartTime = Date.now();
-                log("Начало записи аудиоданных");
+                widgetLog("Начало записи аудиоданных");
               }
               
             } catch (error) {
-              log(`Ошибка отправки аудио: ${error.message}`, "error");
+              widgetLog(`Ошибка отправки аудио: ${error.message}`, "error");
             }
             
             // Логика определения тишины и автоматической отправки
@@ -978,7 +1096,7 @@
                   // Отправляем буфер с задержкой 
                   setTimeout(() => {
                     // Проверяем снова, не появился ли звук
-                    if (isSilent && isListening && !reconnecting) {
+                    if (isSilent && isListening && !isReconnecting) {
                       commitAudioBuffer();
                       lastCommitTime = Date.now();
                       hasSentAudioInCurrentSegment = false;
@@ -994,11 +1112,10 @@
         streamSource.connect(audioProcessor);
         audioProcessor.connect(audioContext.destination);
         
-        log("Аудио инициализировано успешно");
+        widgetLog("Аудио инициализировано успешно");
         return true;
       } catch (error) {
-        log(`Ошибка инициализации аудио: ${error.message}`, "error");
-        widgetLog(`Audio initialization error: ${error}`, 'error');
+        widgetLog(`Ошибка инициализации аудио: ${error.message}`, "error");
         showMessage("Ошибка доступа к микрофону. Проверьте настройки браузера.");
         return false;
       }
@@ -1006,24 +1123,24 @@
     
     // Функция для отправки аудиобуфера
     function commitAudioBuffer() {
-      if (!isListening || !websocket || websocket.readyState !== WebSocket.OPEN || reconnecting) return;
+      if (!isListening || !websocket || websocket.readyState !== WebSocket.OPEN || isReconnecting) return;
       
       // Проверяем, есть ли в буфере достаточно аудиоданных
       if (!hasAudioData) {
-        log("Не отправляем пустой аудиобуфер", "warn");
+        widgetLog("Не отправляем пустой аудиобуфер", "warn");
         return;
       }
       
       // Проверяем минимальную длительность аудио (300мс требуется для корректной работы)
       const audioLength = Date.now() - audioDataStartTime;
       if (audioLength < minimumAudioLength) {
-        log(`Аудиобуфер слишком короткий (${audioLength}мс), ожидаем больше данных`, "warn");
+        widgetLog(`Аудиобуфер слишком короткий (${audioLength}мс), ожидаем больше данных`, "warn");
         
         // Продолжаем запись еще немного времени
         setTimeout(() => {
           // Повторно пытаемся отправить буфер
-          if (isListening && hasAudioData && !reconnecting) {
-            log(`Отправка аудиобуфера после дополнительной записи (${Date.now() - audioDataStartTime}мс)`);
+          if (isListening && hasAudioData && !isReconnecting) {
+            widgetLog(`Отправка аудиобуфера после дополнительной записи (${Date.now() - audioDataStartTime}мс)`);
             sendCommitBuffer();
           }
         }, minimumAudioLength - audioLength + 50); // Добавляем небольшой запас
@@ -1037,7 +1154,7 @@
     
     // Функция для фактической отправки буфера
     function sendCommitBuffer() {
-      log("Отправка аудиобуфера");
+      widgetLog("Отправка аудиобуфера");
       
       // Сбрасываем эффект активности
       mainCircle.classList.remove('listening');
@@ -1073,7 +1190,7 @@
         }
         return bytes.buffer;
       } catch (e) {
-        log(`Ошибка при декодировании base64: ${e.message}`, "error");
+        widgetLog(`Ошибка при декодировании base64: ${e.message}`, "error");
         return new ArrayBuffer(0);
       }
     }
@@ -1222,8 +1339,7 @@
         
         audio.oncanplaythrough = function() {
           audio.play().catch(err => {
-            log(`Ошибка при воспроизведении: ${err.message}`, "error");
-            widgetLog(`Audio playback error: ${err}`, 'error');
+            widgetLog(`Ошибка при воспроизведении: ${err.message}`, "error");
             playNextAudio(); // В случае ошибки переходим к следующему аудио
           });
         };
@@ -1241,8 +1357,7 @@
           playNextAudio(); // В случае ошибки переходим к следующему аудио
         };
       } catch (error) {
-        log(`Ошибка воспроизведения аудио: ${error.message}`, "error");
-        widgetLog(`Audio playback error: ${error}`, 'error');
+        widgetLog(`Ошибка воспроизведения аудио: ${error.message}`, "error");
         playNextAudio(); // В случае ошибки переходим к следующему аудио
       }
     }
@@ -1251,7 +1366,10 @@
     async function connectWebSocket() {
       try {
         loaderModal.classList.add('active');
-        log("Подключение...");
+        widgetLog("Подключение...");
+        
+        // Сбрасываем флаг переподключения
+        isReconnecting = true;
         
         // Скрываем ошибку соединения, если она была показана
         hideConnectionError();
@@ -1259,32 +1377,49 @@
         // Проверяем наличие ID ассистента
         if (!ASSISTANT_ID) {
           widgetLog('Assistant ID not found!', 'error');
-          log("Ошибка: ID ассистента не указан", "error");
           showMessage("Ошибка: ID ассистента не указан. Проверьте код встраивания.");
           loaderModal.classList.remove('active');
           return false;
         }
         
-        // Устанавливаем флаг переподключения
-        reconnecting = true;
-        
         // Используем настроенный WebSocket URL с ID ассистента
-        log(`Connecting to WebSocket at: ${WS_URL}`);
-        widgetLog(`Connecting to WebSocket: ${WS_URL}`);
+        widgetLog(`Connecting to WebSocket at: ${WS_URL}`);
+        
+        // Очищаем предыдущее соединение, если оно существует
+        if (websocket) {
+          try {
+            websocket.close();
+          } catch (e) {
+            // Игнорируем ошибки при закрытии
+          }
+        }
+        
+        // Очищаем предыдущий таймер ping
+        if (pingInterval) {
+          clearInterval(pingInterval);
+          pingInterval = null;
+        }
+        
+        // Очищаем таймаут соединения, если он есть
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+        }
         
         // Создаем новое WebSocket соединение
         websocket = new WebSocket(WS_URL);
         
+        // Устанавливаем двоичный тип для эффективной передачи аудио
+        websocket.binaryType = 'arraybuffer';
+        
         // Устанавливаем таймаут на открытие соединения
-        const connectionTimeout = setTimeout(() => {
-          log("Превышено время ожидания соединения", "error");
-          widgetLog('Connection timeout!', 'error');
+        connectionTimeout = setTimeout(() => {
+          widgetLog("Превышено время ожидания соединения", "error");
           
           if (websocket) {
             websocket.close();
           }
           
-          reconnecting = false;
+          isReconnecting = false;
           loaderModal.classList.remove('active');
           
           // Увеличиваем счетчик попыток и проверяем максимальное количество
@@ -1295,25 +1430,85 @@
             
             if (isWidgetOpen) {
               showConnectionError("Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.");
+              updateConnectionStatus('disconnected', 'Отключено');
             } else {
               // Если виджет закрыт, добавляем пульсацию на кнопку
               widgetButton.classList.add('wellcomeai-pulse-animation');
             }
+          } else {
+            // Экспоненциальная задержка перед повторной попыткой
+            const delay = Math.min(30000, Math.pow(2, reconnectAttempts) * 1000);
+            widgetLog(`Попытка переподключения через ${delay/1000} секунд (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+            
+            if (isWidgetOpen) {
+              showMessage(`Превышено время ожидания. Повторная попытка через ${Math.round(delay/1000)} сек...`);
+              updateConnectionStatus('connecting', 'Переподключение...');
+            }
+            
+            setTimeout(() => {
+              connectWebSocket();
+            }, delay);
           }
-        }, 15000);
+        }, CONNECTION_TIMEOUT);
         
         websocket.onopen = function() {
           clearTimeout(connectionTimeout);
-          log("Соединение установлено");
           widgetLog('WebSocket connection established');
           isConnected = true;
-          reconnecting = false;
+          isReconnecting = false;
           reconnectAttempts = 0;
           connectionFailedPermanently = false;
           loaderModal.classList.remove('active');
           
+          // Инициализируем переменные для ping/pong
+          lastPingTime = Date.now();
+          lastPongTime = Date.now();
+          
+          // Настраиваем периодический пинг для поддержания соединения
+          pingInterval = setInterval(() => {
+            if (websocket && websocket.readyState === WebSocket.OPEN && !isReconnecting) {
+              try {
+                // Отправляем ping сообщение для поддержания соединения
+                websocket.send(JSON.stringify({
+                  type: "ping",
+                  event_id: `ping_${Date.now()}`
+                }));
+                lastPingTime = Date.now();
+                widgetLog('Отправлен ping для поддержания соединения', 'debug');
+                
+                // Проверяем, не слишком ли давно был последний pong
+                const pingPongDelay = lastPingTime - lastPongTime;
+                if (pingPongDelay > PING_INTERVAL * 2) {
+                  widgetLog(`Слишком долго нет ответа на ping: ${pingPongDelay}ms`, 'warn');
+                  
+                  // Если слишком долго нет ответа, возможно соединение потеряно
+                  if (pingPongDelay > PING_INTERVAL * 3) {
+                    widgetLog('Связь потеряна, пробуем переподключиться', 'error');
+                    
+                    // Закрываем текущее соединение
+                    websocket.close();
+                    
+                    // Запускаем переподключение
+                    reconnectWithDelay(1000);
+                  }
+                }
+              } catch (error) {
+                widgetLog(`Ошибка отправки ping: ${error}`, 'error');
+              }
+            } else {
+              // Если соединение закрыто или в процессе переподключения, очищаем интервал
+              clearInterval(pingInterval);
+              pingInterval = null;
+            }
+          }, PING_INTERVAL);
+          
           // Скрываем ошибку соединения, если она была показана
           hideConnectionError();
+          
+          // Обновляем статус соединения
+          if (isWidgetOpen) {
+            updateConnectionStatus('connected', 'Подключено');
+          }
           
           // Автоматически начинаем слушать если виджет открыт
           if (isWidgetOpen) {
@@ -1323,145 +1518,133 @@
         
         websocket.onmessage = function(event) {
           try {
-            const data = JSON.parse(event.data);
-            
-            // Обработка различных типов сообщений
-            if (data.type === 'error') {
-              log(`Ошибка: ${data.error ? data.error.message : 'Неизвестная ошибка'}`, "error");
-              widgetLog(`Server error: ${data.error}`, 'error');
-            } 
-            // Обработка текстового ответа
-            else if (data.type === 'response.text.delta') {
-              if (data.delta) {
-                showMessage(data.delta, 0); // Установим duration = 0, чтобы сообщение не скрывалось автоматически
+            // Обработка разных типов данных (текст/бинарные)
+            let data;
+            if (typeof event.data === 'string') {
+              data = JSON.parse(event.data);
+              
+              // Обработка ping/pong для поддержания соединения
+              if (data.type === 'pong') {
+                lastPongTime = Date.now();
+                widgetLog('Получен pong от сервера', 'debug');
+                return;
+              }
+              
+              // Обработка статуса соединения
+              if (data.type === 'connection_status') {
+                widgetLog(`Получен статус соединения: ${data.status} - ${data.message}`);
                 
-                // Если виджет закрыт, добавляем пульсацию на кнопку
-                if (!isWidgetOpen) {
-                  widgetButton.classList.add('wellcomeai-pulse-animation');
+                if (data.status === 'connected') {
+                  // Соединение успешно установлено
+                  isConnected = true;
+                  updateConnectionStatus('connected', 'Подключено');
+                } else if (data.status === 'connecting' || data.status === 'reconnecting') {
+                  // В процессе подключения
+                  updateConnectionStatus('connecting', data.message || 'Подключение...');
+                }
+                
+                return;
+              }
+              
+              // Обработка ошибок
+              if (data.type === 'error') {
+                widgetLog(`Ошибка от сервера: ${data.error ? data.error.message : 'Неизвестная ошибка'}`, "error");
+                
+                if (isWidgetOpen) {
+                  showMessage(`Ошибка: ${data.error ? data.error.message : 'Неизвестная ошибка'}`);
+                }
+                
+                return;
+              }
+              
+              // Обработка текстового ответа
+              if (data.type === 'response.text.delta') {
+                if (data.delta) {
+                  showMessage(data.delta, 0); // Установим duration = 0, чтобы сообщение не скрывалось автоматически
+                  
+                  // Если виджет закрыт, добавляем пульсацию на кнопку
+                  if (!isWidgetOpen) {
+                    widgetButton.classList.add('wellcomeai-pulse-animation');
+                  }
                 }
               }
-            }
-            // Завершение текста
-            else if (data.type === 'response.text.done') {
-              // После завершения текста, установим таймер на скрытие сообщения
-              setTimeout(() => {
-                hideMessage();
-              }, 5000);
-            }
-            // Обработка аудио
-            else if (data.type === 'response.audio.delta') {
-              if (data.delta) {
-                audioChunksBuffer.push(data.delta);
-              }
-            }
-            // Аудио готово для воспроизведения
-            else if (data.type === 'response.audio.done') {
-              if (audioChunksBuffer.length > 0) {
-                const fullAudio = audioChunksBuffer.join('');
-                addAudioToPlaybackQueue(fullAudio);
-                audioChunksBuffer = [];
-              }
-            }
-            // Ответ завершен
-            else if (data.type === 'response.done') {
-              widgetLog('Response done received');
-              // Начинаем снова слушать автоматически, если виджет открыт
-              if (isWidgetOpen && !isPlayingAudio && !reconnecting) {
+              // Завершение текста
+              else if (data.type === 'response.text.done') {
+                // После завершения текста, установим таймер на скрытие сообщения
                 setTimeout(() => {
-                  startListening();
-                }, 300);
+                  hideMessage();
+                }, 5000);
               }
+              // Обработка аудио
+              else if (data.type === 'response.audio.delta') {
+                if (data.delta) {
+                  audioChunksBuffer.push(data.delta);
+                }
+              }
+              // Аудио готово для воспроизведения
+              else if (data.type === 'response.audio.done') {
+                if (audioChunksBuffer.length > 0) {
+                  const fullAudio = audioChunksBuffer.join('');
+                  addAudioToPlaybackQueue(fullAudio);
+                  audioChunksBuffer = [];
+                }
+              }
+              // Ответ завершен
+              else if (data.type === 'response.done') {
+                widgetLog('Response done received');
+                // Начинаем снова слушать автоматически, если виджет открыт
+                if (isWidgetOpen && !isPlayingAudio && !isReconnecting) {
+                  setTimeout(() => {
+                    startListening();
+                  }, 300);
+                }
+              }
+            } else {
+              // Бинарные данные (обычно аудио)
+              // Преобразуем ArrayBuffer в base64
+              const base64Audio = arrayBufferToBase64(event.data);
+              addAudioToPlaybackQueue(base64Audio);
             }
           } catch (error) {
-            log(`Ошибка обработки сообщения: ${error.message}`, "error");
-            widgetLog(`Error processing message: ${error}`, 'error');
+            widgetLog(`Ошибка обработки сообщения: ${error.message}`, "error");
           }
         };
         
         websocket.onclose = function(event) {
-          log(`Соединение закрыто: ${event.code} ${event.reason}`);
           widgetLog(`WebSocket connection closed: ${event.code}, ${event.reason}`);
           isConnected = false;
           isListening = false;
           
+          // Очищаем интервал ping
+          if (pingInterval) {
+            clearInterval(pingInterval);
+            pingInterval = null;
+          }
+          
           // Не пытаемся переподключаться, если соединение было закрыто нормально
           if (event.code === 1000 || event.code === 1001) {
-            reconnecting = false;
+            isReconnecting = false;
             widgetLog('Clean WebSocket close, not reconnecting');
             return;
           }
           
-          // Проверяем, не превышено ли максимальное количество попыток
-          if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            widgetLog('Maximum reconnection attempts reached');
-            reconnecting = false;
-            connectionFailedPermanently = true;
-            
-            // Показываем сообщение пользователю
-            if (isWidgetOpen) {
-              showConnectionError("Не удалось восстановить соединение. Попробуйте перезагрузить страницу.");
-            } else {
-              // Если виджет закрыт, добавляем пульсацию на кнопку
-              widgetButton.classList.add('wellcomeai-pulse-animation');
-            }
-            return;
-          }
-          
-          reconnecting = true;
-          
-          // Показываем сообщение пользователю, если виджет открыт
-          if (isWidgetOpen) {
-            showMessage("Соединение прервано. Переподключение...", 0);
-          }
-          
-          // Экспоненциальная задержка для переподключения
-          const reconnectDelay = Math.min(30000, Math.pow(2, reconnectAttempts) * 1000);
-          reconnectAttempts++;
-          
-          widgetLog(`Reconnecting in ${reconnectDelay/1000} seconds, attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
-          
-          // Пытаемся переподключиться с увеличивающейся задержкой
-          setTimeout(() => {
-            if (reconnecting) {
-              connectWebSocket().then(() => {
-                if (isConnected) {
-                  reconnectAttempts = 0; // Сбрасываем счетчик при успешном подключении
-                  reconnecting = false;
-                  
-                  if (isWidgetOpen) {
-                    showMessage("Соединение восстановлено");
-                    
-                    // Если виджет открыт, автоматически начинаем слушать
-                    setTimeout(() => {
-                      if (isWidgetOpen && !isListening && !isPlayingAudio) {
-                        startListening();
-                      }
-                    }, 1000);
-                  }
-                } else {
-                  reconnecting = false;
-                }
-              }).catch(() => {
-                reconnecting = false;
-              });
-            }
-          }, reconnectDelay);
+          // Вызываем функцию переподключения с экспоненциальной задержкой
+          reconnectWithDelay();
         };
         
         websocket.onerror = function(error) {
-          log("Ошибка соединения", "error");
           widgetLog(`WebSocket error: ${error}`, 'error');
           
           if (isWidgetOpen) {
             showMessage("Ошибка соединения с сервером");
+            updateConnectionStatus('disconnected', 'Ошибка соединения');
           }
         };
         
         return true;
       } catch (error) {
-        log(`Ошибка при установке соединения: ${error.message}`, "error");
         widgetLog(`Error connecting to WebSocket: ${error}`, 'error');
-        reconnecting = false;
+        isReconnecting = false;
         loaderModal.classList.remove('active');
         
         // Увеличиваем счетчик попыток и проверяем максимальное количество
@@ -1471,24 +1654,92 @@
           connectionFailedPermanently = true;
           if (isWidgetOpen) {
             showConnectionError("Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.");
+            updateConnectionStatus('disconnected', 'Отключено');
           }
         } else {
-          showMessage("Не удалось подключиться к серверу. Попробуйте еще раз.");
+          // Экспоненциальная задержка перед повторной попыткой
+          reconnectWithDelay();
         }
         
         return false;
       }
     }
     
+    // Функция для переподключения с задержкой
+    function reconnectWithDelay(initialDelay = 0) {
+      // Проверяем, не превышено ли максимальное количество попыток
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        widgetLog('Maximum reconnection attempts reached');
+        isReconnecting = false;
+        connectionFailedPermanently = true;
+        
+        // Показываем сообщение пользователю
+        if (isWidgetOpen) {
+          showConnectionError("Не удалось восстановить соединение. Попробуйте перезагрузить страницу.");
+          updateConnectionStatus('disconnected', 'Отключено');
+        } else {
+          // Если виджет закрыт, добавляем пульсацию на кнопку
+          widgetButton.classList.add('wellcomeai-pulse-animation');
+        }
+        return;
+      }
+      
+      isReconnecting = true;
+      
+      // Показываем сообщение пользователю, если виджет открыт
+      if (isWidgetOpen) {
+        showMessage("Соединение прервано. Переподключение...", 0);
+        updateConnectionStatus('connecting', 'Переподключение...');
+      }
+      
+      // Если задана начальная задержка, используем ее, иначе экспоненциальная
+      const delay = initialDelay > 0 ? 
+                    initialDelay : 
+                    Math.min(30000, Math.pow(2, reconnectAttempts) * 1000);
+      
+      reconnectAttempts++;
+      
+      widgetLog(`Reconnecting in ${delay/1000} seconds, attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+      
+      // Пытаемся переподключиться с увеличивающейся задержкой
+      setTimeout(() => {
+        if (isReconnecting) {
+          connectWebSocket().then(success => {
+            if (success) {
+              reconnectAttempts = 0; // Сбрасываем счетчик при успешном подключении
+              isReconnecting = false;
+              
+              if (isWidgetOpen) {
+                showMessage("Соединение восстановлено", 3000);
+                updateConnectionStatus('connected', 'Подключено');
+                
+                // Если виджет открыт, автоматически начинаем слушать
+                setTimeout(() => {
+                  if (isWidgetOpen && !isListening && !isPlayingAudio) {
+                    startListening();
+                  }
+                }, 1000);
+              }
+            } else {
+              // Если не удалось подключиться, функция connectWebSocket
+              // сама запустит следующую попытку через экспоненциальную задержку
+              isReconnecting = false;
+            }
+          }).catch(() => {
+            isReconnecting = false;
+          });
+        }
+      }, delay);
+    }
+    
     // Начало записи голоса
     async function startListening() {
-      if (!isConnected || isPlayingAudio || reconnecting || isListening) {
-        widgetLog(`Cannot start listening: isConnected=${isConnected}, isPlayingAudio=${isPlayingAudio}, reconnecting=${reconnecting}, isListening=${isListening}`);
+      if (!isConnected || isPlayingAudio || isReconnecting || isListening) {
+        widgetLog(`Cannot start listening: isConnected=${isConnected}, isPlayingAudio=${isPlayingAudio}, isReconnecting=${isReconnecting}, isListening=${isListening}`);
         return;
       }
       
       isListening = true;
-      log("Начало записи голоса");
       widgetLog('Starting to listen');
       
       // Отправляем команду для очистки буфера ввода
@@ -1530,7 +1781,7 @@
       }
     }
 
-    // Добавляем обработчики событий для интерфейса - делаем их более надежными
+    // Добавляем обработчики событий для интерфейса
     widgetButton.addEventListener('click', function(e) {
       widgetLog('Button clicked');
       e.preventDefault();
@@ -1547,9 +1798,9 @@
     
     // Обработчик для основного круга (для запуска распознавания голоса)
     mainCircle.addEventListener('click', function() {
-      widgetLog(`Circle clicked: isWidgetOpen=${isWidgetOpen}, isListening=${isListening}, isPlayingAudio=${isPlayingAudio}, reconnecting=${reconnecting}`);
+      widgetLog(`Circle clicked: isWidgetOpen=${isWidgetOpen}, isListening=${isListening}, isPlayingAudio=${isPlayingAudio}, isReconnecting=${isReconnecting}`);
       
-      if (isWidgetOpen && !isListening && !isPlayingAudio && !reconnecting) {
+      if (isWidgetOpen && !isListening && !isPlayingAudio && !isReconnecting) {
         if (isConnected) {
           startListening();
         } else if (connectionFailedPermanently) {
@@ -1599,7 +1850,7 @@
       
       // Проверка соединения
       widgetLog(`Connection state = ${websocket ? websocket.readyState : 'No websocket'}`);
-      widgetLog(`Status flags = isConnected: ${isConnected}, isListening: ${isListening}, isPlayingAudio: ${isPlayingAudio}, reconnecting: ${reconnecting}, isWidgetOpen: ${isWidgetOpen}`);
+      widgetLog(`Status flags = isConnected: ${isConnected}, isListening: ${isListening}, isPlayingAudio: ${isPlayingAudio}, isReconnecting: ${isReconnecting}, isWidgetOpen: ${isWidgetOpen}`);
     }, 2000);
   }
 
