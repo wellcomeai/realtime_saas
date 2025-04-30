@@ -366,6 +366,9 @@ async def create_openai_connection(api_key=None):
 async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEFAULT_SYSTEM_MESSAGE, functions=None):
     """Отправляет настройки сессии в WebSocket OpenAI"""
     
+    # Логируем используемый системный промпт для отладки
+    logger.info(f"Используем системный промпт: {system_message[:100]}...")
+    
     # Настройка определения завершения речи
     turn_detection = {
         "type": "server_vad",
@@ -394,7 +397,7 @@ async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEF
             "input_audio_format": "pcm16",        # Формат входящего аудио
             "output_audio_format": "pcm16",       # Формат исходящего аудио
             "voice": voice,                       # Голос ассистента
-            "instructions": system_message,       # Системное сообщение
+            "instructions": system_message,       # Системное сообщение из БД
             "modalities": ["text", "audio"],      # Поддерживаемые модальности
             "temperature": 0.7,                   # Температура генерации
             "max_response_output_tokens": 500,    # Лимит токенов для ответа
@@ -406,7 +409,7 @@ async def send_session_update(openai_ws, voice=DEFAULT_VOICE, system_message=DEF
     try:
         # Отправляем настройки и ожидаем небольшое время для применения
         await openai_ws.send(json.dumps(session_update))
-        logger.info(f"Настройки сессии с голосом {voice} отправлены")
+        logger.info(f"Настройки сессии с голосом {voice} и уникальным промптом отправлены")
     except Exception as e:
         logger.error(f"Ошибка при отправке настроек сессии: {str(e)}")
         raise
@@ -867,9 +870,7 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                 logger.error(f"Ассистент {assistant_id} не найден в базе данных")
                 await websocket.send_json({
                     "type": "error",
-                    "error": {
-                        "message": "Помощник не найден"
-                    }
+                    "error": {"message": "Помощник не найден"}
                 })
                 break
                 
@@ -877,9 +878,7 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                 logger.error(f"Ассистент {assistant_id} не активен")
                 await websocket.send_json({
                     "type": "error",
-                    "error": {
-                        "message": "Этот помощник не активен"
-                    }
+                    "error": {"message": "Этот помощник не активен"}
                 })
                 break
                 
@@ -891,9 +890,7 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                 logger.error(f"Пользователь {user_id} не найден в базе данных")
                 await websocket.send_json({
                     "type": "error",
-                    "error": {
-                        "message": "Пользователь не найден"
-                    }
+                    "error": {"message": "Пользователь не найден"}
                 })
                 break
                 
@@ -904,9 +901,7 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                 logger.error("API ключ OpenAI не найден")
                 await websocket.send_json({
                     "type": "error",
-                    "error": {
-                        "message": "API ключ OpenAI не настроен"
-                    }
+                    "error": {"message": "API ключ OpenAI не настроен"}
                 })
                 break
                 
@@ -959,6 +954,9 @@ async def handle_websocket_connection_with_retry(websocket: WebSocket, assistant
                     })
                 except Exception as e:
                     logger.error(f"Ошибка при отправке статуса успешного подключения: {str(e)}")
+                
+                # Добавляем более подробное логирование системного промпта
+                logger.info(f"Для ассистента {assistant_id} используется промпт: {assistant.system_prompt[:100]}...")
                 
                 # Отправляем настройки сессии в OpenAI
                 await send_session_update(
@@ -1331,6 +1329,11 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
                         if response.get('type') == 'response.text.delta' and 'delta' in response:
                             response_text += response['delta']
                             
+                            # При получении первого текстового фрагмента ответа, добавим лог
+                            if len(response_text) <= len(response['delta']):
+                                assistant_id = client_connections[client_id]["assistant_id"]
+                                logger.info(f"Ассистент {assistant_id} начал отвечать: {response['delta'][:30]}...")
+                            
                         # Сохраняем полный ответ при завершении
                         if response.get('type') == 'response.text.done' and 'text' in response:
                             response_text = response['text']
@@ -1422,6 +1425,7 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
         logger.error(f"Ошибка в задаче forward_openai_to_client для клиента {client_id}: {str(e)}")
         logger.error(traceback.format_exc())
         raise
+
 # WebSocket для голосовых помощников - улучшенная версия с использованием функции с повторными попытками
 @app.websocket("/ws/{assistant_id}")
 async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depends(get_db)):
