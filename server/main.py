@@ -516,15 +516,19 @@ async def update_current_user_info(user_update: UserUpdate, current_user: User =
         # Получаем только установленные поля (не None)
         update_data = user_update.dict(exclude_unset=True)
         
+        logger.info(f"Обновление пользователя {current_user.id}. Данные: {update_data}")
+        
         if not update_data:
             return {"message": "Нет данных для обновления"}
         
         # Обновляем данные пользователя
         for key, value in update_data.items():
             setattr(current_user, key, value)
+            logger.info(f"Установлено свойство {key} = {value}")
         
         # Сохраняем изменения
         db.commit()
+        logger.info(f"Изменения сохранены в базу данных для пользователя {current_user.id}")
         
         # Возвращаем обновленные данные
         user_dict = {
@@ -543,6 +547,7 @@ async def update_current_user_info(user_update: UserUpdate, current_user: User =
         return user_dict
     except Exception as e:
         logger.error(f"Ошибка при обновлении пользователя: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Ошибка при обновлении пользователя: {str(e)}")
 
 # API для управления помощниками
