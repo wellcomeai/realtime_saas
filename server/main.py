@@ -1289,7 +1289,6 @@ async def forward_client_to_openai(client_ws: WebSocket, openai_ws, client_id: i
         logger.error(traceback.format_exc())
         raise
 
-# Улучшенная функция для пересылки сообщений от OpenAI к клиенту
 async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: int, db = None):
     """
     Пересылает сообщения от API OpenAI клиенту (браузеру).
@@ -1374,12 +1373,7 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
                         logger.warning(f"Не удалось распарсить JSON от OpenAI: {openai_message[:100]}...")
                         # Продолжаем, отправляя сообщение как есть
                 
-                # Проверяем состояние соединения с клиентом перед отправкой
-                if not client_ws.client_state == WebSocketState.CONNECTED:
-                    logger.error(f"Соединение с клиентом {client_id} закрыто перед отправкой данных от OpenAI")
-                    break
-                
-                # Пересылаем сообщение клиенту
+                # Безопасно отправляем сообщение клиенту
                 try:
                     if isinstance(openai_message, str):
                         await client_ws.send_text(openai_message)
@@ -1388,10 +1382,6 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
                     
                     # Сбрасываем счетчик ошибок при успешной отправке
                     error_count = 0
-                    
-                except websockets.exceptions.ConnectionClosed as e:
-                    logger.error(f"Соединение с клиентом {client_id} закрыто при отправке: {e.code}")
-                    raise  # Пробрасываем ошибку для обработки на уровень выше
                     
                 except Exception as send_error:
                     error_count += 1
@@ -1413,13 +1403,16 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
         logger.warning(f"Соединение с OpenAI закрыто для клиента {client_id}: {e.code}, {e.reason}")
         try:
             # Сообщаем клиенту о закрытии соединения
-            if client_ws.client_state == WebSocketState.CONNECTED:  # Проверяем состояние соединения
+            try:
                 await client_ws.send_json({
                     "type": "error",
                     "error": {
                         "message": f"Соединение с OpenAI прервано: {e.reason}"
                     }
                 })
+            except Exception:
+                # Если не удалось отправить, то соединение возможно уже закрыто
+                logger.debug(f"Не удалось отправить уведомление - соединение с клиентом {client_id} закрыто")
         except Exception as send_err:
             logger.error(f"Не удалось отправить уведомление о закрытии соединения клиенту {client_id}: {str(send_err)}")
         
@@ -1429,7 +1422,6 @@ async def forward_openai_to_client(openai_ws, client_ws: WebSocket, client_id: i
         logger.error(f"Ошибка в задаче forward_openai_to_client для клиента {client_id}: {str(e)}")
         logger.error(traceback.format_exc())
         raise
-
 # WebSocket для голосовых помощников - улучшенная версия с использованием функции с повторными попытками
 @app.websocket("/ws/{assistant_id}")
 async def websocket_assistant(websocket: WebSocket, assistant_id: str, db = Depends(get_db)):
