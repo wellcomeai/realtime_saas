@@ -1,12 +1,24 @@
 /**
  * WellcomeAI Widget Loader Script
- * Версия: 1.0.4
+ * Версия: 1.0.5
  * 
  * Этот скрипт динамически создает и встраивает виджет голосового ассистента
  * на любой сайт, в том числе на Tilda и другие конструкторы сайтов.
  */
 
 (function() {
+  // Функция для логирования состояния виджета
+  const widgetLog = (message, type = 'info') => {
+    const prefix = '[WellcomeAI Widget]';
+    if (type === 'error') {
+      console.error(`${prefix} ERROR:`, message);
+    } else if (type === 'warn') {
+      console.warn(`${prefix} WARNING:`, message);
+    } else {
+      console.log(`${prefix}`, message);
+    }
+  };
+
   // Функция для определения URL сервера
   const getServerUrl = () => {
     // Сначала проверяем, есть ли атрибут data-server на скрипте
@@ -15,9 +27,17 @@
     
     // Ищем скрипт с data-server
     for (let i = 0; i < scriptTags.length; i++) {
+      // Проверяем атрибут data-server
       if (scriptTags[i].hasAttribute('data-server')) {
         serverUrl = scriptTags[i].getAttribute('data-server');
-        console.log('WellcomeAI Widget: Found server URL from data-server attribute:', serverUrl);
+        widgetLog(`Found server URL from data-server attribute: ${serverUrl}`);
+        break;
+      }
+      
+      // Проверяем dataset.server
+      if (scriptTags[i].dataset && scriptTags[i].dataset.server) {
+        serverUrl = scriptTags[i].dataset.server;
+        widgetLog(`Found server URL from dataset.server: ${serverUrl}`);
         break;
       }
       
@@ -28,15 +48,15 @@
           // Используем URL API для корректного построения абсолютного URL
           const url = new URL(src, window.location.href);
           serverUrl = url.origin;
-          console.log('WellcomeAI Widget: Extracted server URL from script src:', serverUrl);
+          widgetLog(`Extracted server URL from script src: ${serverUrl}`);
           break;
         } catch (e) {
-          console.error("WellcomeAI Widget: Error extracting server URL from src:", e);
+          widgetLog(`Error extracting server URL from src: ${e.message}`, 'warn');
           
           // Если src относительный, используем текущий домен
           if (src.startsWith('/')) {
             serverUrl = window.location.origin;
-            console.log('WellcomeAI Widget: Using current origin for relative path:', serverUrl);
+            widgetLog(`Using current origin for relative path: ${serverUrl}`);
             break;
           }
         }
@@ -46,13 +66,13 @@
     // Проверяем, содержит ли URL протокол
     if (serverUrl && !serverUrl.match(/^https?:\/\//)) {
       serverUrl = window.location.protocol + '//' + serverUrl;
-      console.log('WellcomeAI Widget: Added protocol to server URL:', serverUrl);
+      widgetLog(`Added protocol to server URL: ${serverUrl}`);
     }
     
     // Если не нашли, используем fallback URL (хостинг Render)
     if (!serverUrl) {
       serverUrl = 'https://realtime-saas.onrender.com';
-      console.log('WellcomeAI Widget: Using fallback server URL:', serverUrl);
+      widgetLog(`Using fallback server URL: ${serverUrl}`);
     }
     
     return serverUrl.replace(/\/$/, ''); // Убираем конечный слеш, если есть
@@ -60,28 +80,105 @@
 
   // Функция для получения ID ассистента
   const getAssistantId = () => {
+    // 1. Проверяем наличие атрибута data-assistantId в скрипте
     const scriptTags = document.querySelectorAll('script');
     for (let i = 0; i < scriptTags.length; i++) {
-      if (scriptTags[i].hasAttribute('data-assistantId')) {
-        const id = scriptTags[i].getAttribute('data-assistantId');
-        console.log('WellcomeAI Widget: Found assistant ID:', id);
+      // Проверяем оба варианта написания - с большой и маленькой буквой I
+      if (scriptTags[i].hasAttribute('data-assistantId') || scriptTags[i].hasAttribute('data-assistantid')) {
+        const id = scriptTags[i].getAttribute('data-assistantId') || scriptTags[i].getAttribute('data-assistantid');
+        widgetLog(`Found assistant ID from attribute: ${id}`);
+        return id;
+      }
+      
+      // Проверяем dataset атрибут
+      if (scriptTags[i].dataset && (scriptTags[i].dataset.assistantId || scriptTags[i].dataset.assistantid)) {
+        const id = scriptTags[i].dataset.assistantId || scriptTags[i].dataset.assistantid;
+        widgetLog(`Found assistant ID from dataset: ${id}`);
         return id;
       }
     }
-    console.error('WellcomeAI Widget: No assistant ID found in script tags!');
-    return null; // Если не нашли
+    
+    // 2. Пробуем получить ID из URL-параметра
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromUrl = urlParams.get('assistantId') || urlParams.get('assistantid');
+    if (idFromUrl) {
+      widgetLog(`Found assistant ID in URL param: ${idFromUrl}`);
+      return idFromUrl;
+    }
+    
+    // 3. Проверяем наличие глобальной переменной
+    if (window.wellcomeAIAssistantId) {
+      widgetLog(`Found assistant ID in global variable: ${window.wellcomeAIAssistantId}`);
+      return window.wellcomeAIAssistantId;
+    }
+    
+    // Если используем страницу демонстрации, можно вернуть демо-идентификатор
+    if (window.location.hostname.includes('demo') || window.location.pathname.includes('demo')) {
+      widgetLog(`Using demo ID on demo page`);
+      return 'demo';
+    }
+    
+    widgetLog('No assistant ID found in script tags, URL params or global variables!', 'error');
+    return null;
+  };
+
+  // Получение позиции виджета
+  const getWidgetPosition = () => {
+    // Позиции по умолчанию
+    const defaultPosition = {
+      horizontal: 'right',
+      vertical: 'bottom',
+      distance: '20px'
+    };
+
+    // Ищем скрипт с атрибутом position
+    const scriptTags = document.querySelectorAll('script');
+    for (let i = 0; i < scriptTags.length; i++) {
+      // Проверяем атрибут
+      if (scriptTags[i].hasAttribute('data-position')) {
+        return parsePosition(scriptTags[i].getAttribute('data-position'));
+      }
+      
+      // Проверяем dataset
+      if (scriptTags[i].dataset && scriptTags[i].dataset.position) {
+        return parsePosition(scriptTags[i].dataset.position);
+      }
+    }
+
+    // Возвращаем позицию по умолчанию
+    return defaultPosition;
+
+    // Вспомогательная функция для парсинга позиции
+    function parsePosition(positionString) {
+      const position = { ...defaultPosition };
+      
+      if (!positionString) return position;
+      
+      const parts = positionString.split('-');
+      if (parts.length === 2) {
+        if (parts[0] === 'top' || parts[0] === 'bottom') {
+          position.vertical = parts[0];
+          position.horizontal = parts[1];
+        } else if (parts[1] === 'top' || parts[1] === 'bottom') {
+          position.vertical = parts[1];
+          position.horizontal = parts[0];
+        }
+      }
+      
+      return position;
+    }
   };
 
   // Определяем URL сервера и ID ассистента
   const SERVER_URL = getServerUrl();
   const ASSISTANT_ID = getAssistantId();
+  const WIDGET_POSITION = getWidgetPosition();
   
   // Формируем WebSocket URL с указанием ID ассистента
   const WS_URL = SERVER_URL.replace(/^http/, 'ws') + '/ws/' + ASSISTANT_ID;
   
-  console.log('WellcomeAI Widget: Using server URL:', SERVER_URL);
-  console.log('WellcomeAI Widget: WebSocket URL:', WS_URL);
-  console.log('WellcomeAI Widget: Assistant ID:', ASSISTANT_ID);
+  widgetLog(`Configuration: Server URL: ${SERVER_URL}, Assistant ID: ${ASSISTANT_ID}, Position: ${WIDGET_POSITION.vertical}-${WIDGET_POSITION.horizontal}`);
+  widgetLog(`WebSocket URL: ${WS_URL}`);
 
   // Создаем стили для виджета
   function createStyles() {
@@ -90,8 +187,8 @@
     styleEl.textContent = `
       .wellcomeai-widget-container {
         position: fixed;
-        bottom: 20px;
-        right: 20px;
+        ${WIDGET_POSITION.vertical}: ${WIDGET_POSITION.distance};
+        ${WIDGET_POSITION.horizontal}: ${WIDGET_POSITION.distance};
         z-index: 2147483647;
         transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         font-family: 'Segoe UI', 'Roboto', sans-serif;
@@ -145,8 +242,8 @@
       
       .wellcomeai-widget-expanded {
         position: absolute;
-        bottom: 0;
-        right: 0;
+        ${WIDGET_POSITION.vertical}: 0;
+        ${WIDGET_POSITION.horizontal}: 0;
         width: 320px;
         height: 0;
         opacity: 0;
@@ -357,8 +454,8 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        right: 0;
+        bottom: 0;
         background-color: rgba(255, 255, 255, 0.7);
         display: flex;
         align-items: center;
@@ -456,6 +553,7 @@
       }
     `;
     document.head.appendChild(styleEl);
+    widgetLog("Styles created and added to head");
   }
 
   // Загрузка Font Awesome для иконок
@@ -466,6 +564,7 @@
       link.rel = 'stylesheet';
       link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
       document.head.appendChild(link);
+      widgetLog("Font Awesome loaded");
     }
   }
 
@@ -521,14 +620,14 @@
     `;
 
     document.body.appendChild(widgetContainer);
-    console.log('WellcomeAI Widget: HTML structure created and appended to body');
+    widgetLog("HTML structure created and appended to body");
   }
 
   // Основная логика виджета
   function initWidget() {
     // Проверяем, что ID ассистента существует
     if (!ASSISTANT_ID) {
-      console.error('WellcomeAI Widget: Assistant ID not found. Please add data-assistantId attribute to the script tag.');
+      widgetLog("Assistant ID not found. Please add data-assistantId attribute to the script tag.", 'error');
       alert('WellcomeAI Widget Error: Assistant ID not found. Please check console for details.');
       return;
     }
@@ -550,7 +649,7 @@
     
     // Проверка элементов
     if (!widgetButton || !widgetClose || !mainCircle || !audioBars || !loaderModal || !messageDisplay) {
-      console.error('WellcomeAI Widget: Some UI elements were not found!');
+      widgetLog("Some UI elements were not found!", 'error');
       return;
     }
     
@@ -582,7 +681,7 @@
     // Функция логирования
     function log(message, level = 'info') {
       const timestamp = new Date().toLocaleTimeString();
-      console.log(`[WellcomeAI ${level.toUpperCase()}] ${message}`);
+      widgetLog(`${message} [${timestamp}]`, level);
     }
     
     // Создаем аудио-бары для визуализации
@@ -655,8 +754,21 @@
     // Показать ошибку соединения
     function showConnectionError(message) {
       if (connectionError) {
-        connectionError.querySelector('span').textContent = message || 'Ошибка соединения с сервером';
+        connectionError.innerHTML = `
+          ${message || 'Ошибка соединения с сервером'}
+          <button class="wellcomeai-retry-button" id="wellcomeai-retry-button">
+            Повторить подключение
+          </button>
+        `;
         connectionError.classList.add('visible');
+        
+        // Добавляем обработчик для новой кнопки
+        const newRetryButton = connectionError.querySelector('#wellcomeai-retry-button');
+        if (newRetryButton) {
+          newRetryButton.addEventListener('click', function() {
+            resetConnection();
+          });
+        }
       }
     }
     
@@ -667,9 +779,25 @@
       }
     }
     
+    // Сброс состояния соединения
+    function resetConnection() {
+      // Сбрасываем счетчик попыток и флаги
+      reconnectAttempts = 0;
+      connectionFailedPermanently = false;
+      
+      // Скрываем сообщение об ошибке
+      hideConnectionError();
+      
+      // Показываем сообщение о повторном подключении
+      showMessage("Попытка подключения...");
+      
+      // Пытаемся подключиться заново
+      connectWebSocket();
+    }
+    
     // Открыть виджет
     function openWidget() {
-      console.log('WellcomeAI Widget: Opening widget'); // Диагностический лог
+      widgetLog("Opening widget");
       
       // Принудительно устанавливаем z-index для решения конфликтов
       widgetContainer.style.zIndex = "2147483647";
@@ -689,7 +817,7 @@
       
       // Показываем сообщение о проблеме с подключением, если оно есть
       if (connectionFailedPermanently) {
-        showConnectionError('Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.');
+        showConnectionError('Не удалось подключиться к серверу. Нажмите кнопку "Повторить подключение".');
         return;
       }
       
@@ -701,9 +829,7 @@
         // пытаемся подключиться снова
         connectWebSocket();
       } else {
-        console.log('WellcomeAI Widget: Cannot start listening yet:', {
-          isConnected, isListening, isPlayingAudio, reconnecting
-        });
+        widgetLog(`Cannot start listening yet: isConnected=${isConnected}, isListening=${isListening}, isPlayingAudio=${isPlayingAudio}, reconnecting=${reconnecting}`);
       }
       
       // Убираем пульсацию с кнопки
@@ -712,7 +838,7 @@
     
     // Закрыть виджет
     function closeWidget() {
-      console.log('WellcomeAI Widget: Closing widget'); // Диагностический лог
+      widgetLog("Closing widget");
       
       // Останавливаем все аудио процессы
       stopAllAudioProcessing();
@@ -872,7 +998,7 @@
         return true;
       } catch (error) {
         log(`Ошибка инициализации аудио: ${error.message}`, "error");
-        console.error('WellcomeAI Widget: Audio initialization error:', error);
+        widgetLog(`Audio initialization error: ${error}`, 'error');
         showMessage("Ошибка доступа к микрофону. Проверьте настройки браузера.");
         return false;
       }
@@ -1097,7 +1223,7 @@
         audio.oncanplaythrough = function() {
           audio.play().catch(err => {
             log(`Ошибка при воспроизведении: ${err.message}`, "error");
-            console.error('WellcomeAI Widget: Audio playback error:', err);
+            widgetLog(`Audio playback error: ${err}`, 'error');
             playNextAudio(); // В случае ошибки переходим к следующему аудио
           });
         };
@@ -1110,13 +1236,13 @@
         
         // В случае ошибки
         audio.onerror = function() {
-          console.error('WellcomeAI Widget: Audio playback error');
+          widgetLog('Audio playback error', 'error');
           URL.revokeObjectURL(audioUrl);
           playNextAudio(); // В случае ошибки переходим к следующему аудио
         };
       } catch (error) {
         log(`Ошибка воспроизведения аудио: ${error.message}`, "error");
-        console.error('WellcomeAI Widget: Audio playback error:', error);
+        widgetLog(`Audio playback error: ${error}`, 'error');
         playNextAudio(); // В случае ошибки переходим к следующему аудио
       }
     }
@@ -1132,7 +1258,7 @@
         
         // Проверяем наличие ID ассистента
         if (!ASSISTANT_ID) {
-          console.error('WellcomeAI Widget: Assistant ID not found!');
+          widgetLog('Assistant ID not found!', 'error');
           log("Ошибка: ID ассистента не указан", "error");
           showMessage("Ошибка: ID ассистента не указан. Проверьте код встраивания.");
           loaderModal.classList.remove('active');
@@ -1144,7 +1270,7 @@
         
         // Используем настроенный WebSocket URL с ID ассистента
         log(`Connecting to WebSocket at: ${WS_URL}`);
-        console.log('WellcomeAI Widget: Connecting to WebSocket:', WS_URL);
+        widgetLog(`Connecting to WebSocket: ${WS_URL}`);
         
         // Создаем новое WebSocket соединение
         websocket = new WebSocket(WS_URL);
@@ -1152,7 +1278,7 @@
         // Устанавливаем таймаут на открытие соединения
         const connectionTimeout = setTimeout(() => {
           log("Превышено время ожидания соединения", "error");
-          console.error('WellcomeAI Widget: Connection timeout!');
+          widgetLog('Connection timeout!', 'error');
           
           if (websocket) {
             websocket.close();
@@ -1179,7 +1305,7 @@
         websocket.onopen = function() {
           clearTimeout(connectionTimeout);
           log("Соединение установлено");
-          console.log('WellcomeAI Widget: WebSocket connection established');
+          widgetLog('WebSocket connection established');
           isConnected = true;
           reconnecting = false;
           reconnectAttempts = 0;
@@ -1202,7 +1328,7 @@
             // Обработка различных типов сообщений
             if (data.type === 'error') {
               log(`Ошибка: ${data.error ? data.error.message : 'Неизвестная ошибка'}`, "error");
-              console.error('WellcomeAI Widget: Server error:', data.error);
+              widgetLog(`Server error: ${data.error}`, 'error');
             } 
             // Обработка текстового ответа
             else if (data.type === 'response.text.delta') {
@@ -1238,7 +1364,7 @@
             }
             // Ответ завершен
             else if (data.type === 'response.done') {
-              console.log('WellcomeAI Widget: Response done received');
+              widgetLog('Response done received');
               // Начинаем снова слушать автоматически, если виджет открыт
               if (isWidgetOpen && !isPlayingAudio && !reconnecting) {
                 setTimeout(() => {
@@ -1248,26 +1374,26 @@
             }
           } catch (error) {
             log(`Ошибка обработки сообщения: ${error.message}`, "error");
-            console.error('WellcomeAI Widget: Error processing message:', error);
+            widgetLog(`Error processing message: ${error}`, 'error');
           }
         };
         
         websocket.onclose = function(event) {
           log(`Соединение закрыто: ${event.code} ${event.reason}`);
-          console.log('WellcomeAI Widget: WebSocket connection closed:', event.code, event.reason);
+          widgetLog(`WebSocket connection closed: ${event.code}, ${event.reason}`);
           isConnected = false;
           isListening = false;
           
           // Не пытаемся переподключаться, если соединение было закрыто нормально
           if (event.code === 1000 || event.code === 1001) {
             reconnecting = false;
-            console.log('WellcomeAI Widget: Clean WebSocket close, not reconnecting');
+            widgetLog('Clean WebSocket close, not reconnecting');
             return;
           }
           
           // Проверяем, не превышено ли максимальное количество попыток
           if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            console.log('WellcomeAI Widget: Maximum reconnection attempts reached');
+            widgetLog('Maximum reconnection attempts reached');
             reconnecting = false;
             connectionFailedPermanently = true;
             
@@ -1292,7 +1418,7 @@
           const reconnectDelay = Math.min(30000, Math.pow(2, reconnectAttempts) * 1000);
           reconnectAttempts++;
           
-          console.log(`WellcomeAI Widget: Reconnecting in ${reconnectDelay/1000} seconds, attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+          widgetLog(`Reconnecting in ${reconnectDelay/1000} seconds, attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
           
           // Пытаемся переподключиться с увеличивающейся задержкой
           setTimeout(() => {
@@ -1324,7 +1450,7 @@
         
         websocket.onerror = function(error) {
           log("Ошибка соединения", "error");
-          console.error("WellcomeAI Widget: WebSocket error:", error);
+          widgetLog(`WebSocket error: ${error}`, 'error');
           
           if (isWidgetOpen) {
             showMessage("Ошибка соединения с сервером");
@@ -1334,7 +1460,7 @@
         return true;
       } catch (error) {
         log(`Ошибка при установке соединения: ${error.message}`, "error");
-        console.error('WellcomeAI Widget: Error connecting to WebSocket:', error);
+        widgetLog(`Error connecting to WebSocket: ${error}`, 'error');
         reconnecting = false;
         loaderModal.classList.remove('active');
         
@@ -1357,15 +1483,13 @@
     // Начало записи голоса
     async function startListening() {
       if (!isConnected || isPlayingAudio || reconnecting || isListening) {
-        console.log('WellcomeAI Widget: Cannot start listening:', {
-          isConnected, isPlayingAudio, reconnecting, isListening
-        });
+        widgetLog(`Cannot start listening: isConnected=${isConnected}, isPlayingAudio=${isPlayingAudio}, reconnecting=${reconnecting}, isListening=${isListening}`);
         return;
       }
       
       isListening = true;
       log("Начало записи голоса");
-      console.log('WellcomeAI Widget: Starting to listen');
+      widgetLog('Starting to listen');
       
       // Отправляем команду для очистки буфера ввода
       if (websocket && websocket.readyState === WebSocket.OPEN) {
@@ -1379,7 +1503,7 @@
       if (!audioContext) {
         const success = await initAudio();
         if (!success) {
-          console.error('WellcomeAI Widget: Failed to initialize audio');
+          widgetLog('Failed to initialize audio', 'error');
           isListening = false;
           return;
         }
@@ -1387,9 +1511,9 @@
         // Возобновляем AudioContext если он был приостановлен
         try {
           await audioContext.resume();
-          console.log('WellcomeAI Widget: AudioContext resumed');
+          widgetLog('AudioContext resumed');
         } catch (error) {
-          console.error('WellcomeAI Widget: Failed to resume AudioContext:', error);
+          widgetLog(`Failed to resume AudioContext: ${error}`, 'error');
           isListening = false;
           return;
         }
@@ -1408,14 +1532,14 @@
 
     // Добавляем обработчики событий для интерфейса - делаем их более надежными
     widgetButton.addEventListener('click', function(e) {
-      console.log('WellcomeAI Widget: Button clicked');
+      widgetLog('Button clicked');
       e.preventDefault();
       e.stopPropagation();
       openWidget();
     });
 
     widgetClose.addEventListener('click', function(e) {
-      console.log('WellcomeAI Widget: Close button clicked');
+      widgetLog('Close button clicked');
       e.preventDefault();
       e.stopPropagation();
       closeWidget();
@@ -1423,9 +1547,7 @@
     
     // Обработчик для основного круга (для запуска распознавания голоса)
     mainCircle.addEventListener('click', function() {
-      console.log('WellcomeAI Widget: Circle clicked', {
-        isWidgetOpen, isListening, isPlayingAudio, reconnecting
-      });
+      widgetLog(`Circle clicked: isWidgetOpen=${isWidgetOpen}, isListening=${isListening}, isPlayingAudio=${isPlayingAudio}, reconnecting=${reconnecting}`);
       
       if (isWidgetOpen && !isListening && !isPlayingAudio && !reconnecting) {
         if (isConnected) {
@@ -1442,20 +1564,8 @@
     // Обработчик для кнопки повторного подключения
     if (retryButton) {
       retryButton.addEventListener('click', function() {
-        console.log('WellcomeAI Widget: Retry button clicked');
-        
-        // Сбрасываем счетчик попыток и флаги
-        reconnectAttempts = 0;
-        connectionFailedPermanently = false;
-        
-        // Скрываем сообщение об ошибке
-        hideConnectionError();
-        
-        // Показываем сообщение о повторном подключении
-        showMessage("Попытка подключения...");
-        
-        // Пытаемся подключиться заново
-        connectWebSocket();
+        widgetLog('Retry button clicked');
+        resetConnection();
       });
     }
     
@@ -1464,7 +1574,7 @@
     
     // Проверка DOM и состояния после инициализации
     setTimeout(function() {
-      console.log('WellcomeAI Widget: DOM check after initialization');
+      widgetLog('DOM check after initialization');
       
       // Проверяем видимость и z-index элементов
       const widgetContainer = document.getElementById('wellcomeai-widget-container');
@@ -1472,32 +1582,30 @@
       const widgetExpanded = document.getElementById('wellcomeai-widget-expanded');
       
       if (!widgetContainer) {
-        console.error('WellcomeAI Widget: Widget container not found in DOM!');
+        widgetLog('Widget container not found in DOM!', 'error');
       } else {
-        console.log('WellcomeAI Widget: Container z-index =', getComputedStyle(widgetContainer).zIndex);
+        widgetLog(`Container z-index = ${getComputedStyle(widgetContainer).zIndex}`);
       }
       
       if (!widgetButton) {
-        console.error('WellcomeAI Widget: Button not found in DOM!');
+        widgetLog('Button not found in DOM!', 'error');
       } else {
-        console.log('WellcomeAI Widget: Button is visible =', getComputedStyle(widgetButton).display !== 'none');
+        widgetLog(`Button is visible = ${getComputedStyle(widgetButton).display !== 'none'}`);
       }
       
       if (!widgetExpanded) {
-        console.error('WellcomeAI Widget: Expanded widget not found in DOM!');
+        widgetLog('Expanded widget not found in DOM!', 'error');
       }
       
       // Проверка соединения
-      console.log('WellcomeAI Widget: Connection state =', websocket ? websocket.readyState : 'No websocket');
-      console.log('WellcomeAI Widget: Status flags =', {
-        isConnected, isListening, isPlayingAudio, reconnecting, isWidgetOpen
-      });
+      widgetLog(`Connection state = ${websocket ? websocket.readyState : 'No websocket'}`);
+      widgetLog(`Status flags = isConnected: ${isConnected}, isListening: ${isListening}, isPlayingAudio: ${isPlayingAudio}, reconnecting: ${reconnecting}, isWidgetOpen: ${isWidgetOpen}`);
     }, 2000);
   }
 
   // Инициализируем виджет
   function initializeWidget() {
-    console.log('WellcomeAI Widget: Initializing...');
+    widgetLog('Initializing...');
     
     // Загружаем необходимые стили и скрипты
     loadFontAwesome();
@@ -1509,21 +1617,21 @@
     // Инициализируем основную логику виджета
     initWidget();
     
-    console.log('WellcomeAI Widget: Initialization complete');
+    widgetLog('Initialization complete');
   }
   
   // Проверяем, есть ли уже виджет на странице
   if (!document.getElementById('wellcomeai-widget-container')) {
-    console.log('WellcomeAI Widget: Starting initialization process');
+    widgetLog('Starting initialization process');
     // Если DOM уже загружен, инициализируем сразу
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeWidget);
-      console.log('WellcomeAI Widget: Will initialize on DOMContentLoaded');
+      widgetLog('Will initialize on DOMContentLoaded');
     } else {
-      console.log('WellcomeAI Widget: DOM already loaded, initializing immediately');
+      widgetLog('DOM already loaded, initializing immediately');
       initializeWidget();
     }
   } else {
-    console.log('WellcomeAI Widget: Widget already exists on the page, skipping initialization');
+    widgetLog('Widget already exists on the page, skipping initialization');
   }
 })();
