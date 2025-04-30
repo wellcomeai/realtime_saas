@@ -306,6 +306,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     
     return user
 
+# Функция для создания таблиц при запуске приложения
+def create_tables():
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Таблицы в базе данных созданы успешно")
+    except Exception as e:
+        logger.error(f"Ошибка при создании таблиц: {str(e)}")
+
 # Вспомогательные функции для WebSocket и OpenAI API
 async def create_openai_connection(api_key=None):
     """
