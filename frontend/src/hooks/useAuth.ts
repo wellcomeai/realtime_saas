@@ -1,0 +1,72 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+import { authApi } from "@/api/auth";
+import { tokenStorage } from "@/api/client";
+import { usersApi } from "@/api/users";
+import { useAuthStore } from "@/store/authStore";
+
+export function useAuth() {
+  const { user, isLoading, setUser, setLoading, setSession, logout } =
+    useAuthStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user || !tokenStorage.access) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    usersApi
+      .me()
+      .then((u) => {
+        if (!cancelled) setUser(u);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          tokenStorage.clear();
+          setUser(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+
+    async login(email: string, password: string) {
+      const res = await authApi.login(email, password);
+      setSession(res.user, res.access_token, res.refresh_token);
+      router.push("/dashboard");
+      return res;
+    },
+
+    async register(
+      email: string,
+      password: string,
+      referral_code?: string,
+    ) {
+      const res = await authApi.register({ email, password, referral_code });
+      setSession(res.user, res.access_token, res.refresh_token);
+      router.push("/dashboard");
+      return res;
+    },
+
+    async logout() {
+      try {
+        await authApi.logout();
+      } catch {
+        // ignore
+      }
+      logout();
+      router.push("/login");
+    },
+  };
+}
