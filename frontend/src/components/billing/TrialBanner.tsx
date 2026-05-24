@@ -40,7 +40,7 @@ export function TrialBanner() {
       </div>
       <Link href="/billing">
         <Button size="sm" variant={isExpired ? "default" : "outline"}>
-          Перейти к биллингу
+          Перейти к подписке
         </Button>
       </Link>
     </div>

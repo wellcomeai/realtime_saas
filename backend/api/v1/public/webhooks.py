@@ -11,8 +11,6 @@ from database import get_db
 from modules.billing import service as billing_service
 from modules.billing.models import Payment, PaymentStatus
 from modules.email import service as email_service
-from modules.notifications import service as notif_service
-from modules.notifications.schemas import NotificationCreate
 from modules.referrals import service as ref_service
 from modules.billing.robokassa import verify_result_signature
 
@@ -48,34 +46,11 @@ async def robokassa_webhook(
         return f"OK{InvId}"
 
     payment.status = PaymentStatus.SUCCESS
-    sub = await billing_service.activate_paid_subscription(db, payment)
+    await billing_service.activate_paid_subscription(db, payment)
 
     payout = await ref_service.process_payment_for_referral(db, payment)
 
-    # Уведомление и письмо плательщику
-    await notif_service.create_notification(
-        db,
-        payment.user_id,
-        NotificationCreate(
-            type="payment_success",
-            title="Оплата прошла успешно",
-            body=f"Платёж на сумму {payment.amount} {payment.currency} получен.",
-            metadata={"payment_id": str(payment.id), "subscription_id": str(sub.id)},
-        ),
-    )
-
-    # Письмо/уведомление рефереру
     if payout is not None:
-        await notif_service.create_notification(
-            db,
-            payout.referrer_id,
-            NotificationCreate(
-                type="referral_earned",
-                title="Вы заработали по реферальной программе",
-                body=f"Вам начислено {payout.amount} {payment.currency}.",
-                metadata={"payout_id": str(payout.id)},
-            ),
-        )
         from modules.auth.models import User
         from sqlalchemy import select
 
@@ -102,6 +77,6 @@ async def stripe_webhook(request: Request):
          найти Payment по metadata.payment_id
          activate_paid_subscription(...)
          process_payment_for_referral(...)
-         create_notification + send_email
+         send_email
     """
     raise HTTPException(status_code=501, detail="Stripe webhook not implemented yet")

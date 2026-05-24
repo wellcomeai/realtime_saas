@@ -1,15 +1,17 @@
 """Бизнес-логика auth: регистрация, логин, токены email."""
 from __future__ import annotations
 
+import random
 import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from modules.auth.models import (
+    EmailVerificationCode,
     EmailVerificationToken,
     PasswordResetToken,
     User,
@@ -28,7 +30,7 @@ from modules.billing.models import Subscription, SubscriptionStatus
 async def register_user(
     db: AsyncSession, payload: RegisterRequest
 ) -> tuple[User, str, str, str]:
-    """Returns (user, access_token, refresh_token, email_verification_token)."""
+    """Returns (user, access_token, refresh_token, verification_code)."""
     existing = await db.scalar(select(User).where(User.email == payload.email))
     if existing:
         raise HTTPException(
@@ -54,13 +56,14 @@ async def register_user(
         )
     )
 
-    # Email verification token
-    verif = EmailVerificationToken(
-        user_id=user.id,
-        token=uuid.uuid4().hex,
-        expires_at=now + timedelta(hours=24),
+    code = str(random.randint(100000, 999999))
+    db.add(
+        EmailVerificationCode(
+            user_id=user.id,
+            code=code,
+            expires_at=now + timedelta(minutes=10),
+        )
     )
-    db.add(verif)
 
     # Referral attribution
     if payload.referral_code:
@@ -75,8 +78,66 @@ async def register_user(
         user,
         create_access_token(user.id),
         create_refresh_token(user.id),
-        verif.token,
+        code,
     )
+
+
+async def create_verification_code(db: AsyncSession, user: User) -> str:
+    """Инвалидирует предыдущие неиспользованные коды и создаёт новый."""
+    await db.execute(
+        update(EmailVerificationCode)
+        .where(
+            EmailVerificationCode.user_id == user.id,
+            EmailVerificationCode.is_used.is_(False),
+        )
+        .values(is_used=True)
+    )
+    code = str(random.randint(100000, 999999))
+    rec = EmailVerificationCode(
+        user_id=user.id,
+        code=code,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+    )
+    db.add(rec)
+    await db.commit()
+    return code
+
+
+async def verify_email_code(db: AsyncSession, user_id: uuid.UUID, code: str) -> User:
+    now = datetime.now(timezone.utc)
+    rec = await db.scalar(
+        select(EmailVerificationCode)
+        .where(
+            EmailVerificationCode.user_id == user_id,
+            EmailVerificationCode.is_used.is_(False),
+            EmailVerificationCode.expires_at > now,
+        )
+        .order_by(EmailVerificationCode.created_at.desc())
+    )
+    if rec is None:
+        raise HTTPException(status_code=400, detail="Код не найден или истёк")
+
+    rec.attempts += 1
+    if rec.attempts > 3:
+        rec.is_used = True
+        await db.commit()
+        raise HTTPException(
+            status_code=400,
+            detail="Превышено количество попыток. Запросите новый код",
+        )
+
+    if rec.code != code:
+        await db.commit()
+        raise HTTPException(status_code=400, detail="Неверный код")
+
+    rec.is_used = True
+    user = await db.scalar(select(User).where(User.id == user_id))
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_email_verified = True
+    await db.commit()
+    await db.refresh(user)
+    return user
 
 
 async def authenticate(db: AsyncSession, email: str, password: str) -> User:

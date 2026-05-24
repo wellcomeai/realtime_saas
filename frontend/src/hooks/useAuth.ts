@@ -55,8 +55,15 @@ export function useAuth() {
     ) {
       const res = await authApi.register({ email, password, referral_code });
       setSession(res.user, res.access_token, res.refresh_token);
+      if (res.pending_verification) {
+        return {
+          pendingVerification: true as const,
+          userId: res.user.id,
+          devCode: res.dev_code ?? null,
+        };
+      }
       router.push("/dashboard");
-      return res;
+      return { pendingVerification: false as const };
     },
 
     async logout() {

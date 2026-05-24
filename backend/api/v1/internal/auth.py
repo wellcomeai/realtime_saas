@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from modules.auth import service as auth_service
 from modules.auth.models import User
+from config import settings
 from modules.auth.schemas import (
     AuthResponse,
     ConfirmEmailRequest,
@@ -19,10 +20,12 @@ from modules.auth.schemas import (
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
+    ResendCodeRequest,
     ResendConfirmationRequest,
     ResetPasswordRequest,
     TokenPair,
     UserPublic,
+    VerifyEmailCodeRequest,
 )
 from modules.auth.utils import (
     create_access_token,
@@ -40,12 +43,14 @@ async def register(
     bg: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    user, access, refresh, confirm_token = await auth_service.register_user(db, payload)
-    bg.add_task(email_service.send_confirmation_email, user.email, confirm_token)
+    user, access, refresh, code = await auth_service.register_user(db, payload)
+    bg.add_task(email_service.send_verification_code_email, user.email, code)
     return AuthResponse(
         access_token=access,
         refresh_token=refresh,
         user=UserPublic.model_validate(user),
+        pending_verification=True,
+        dev_code=code if not settings.smtp_user else None,
     )
 
 
@@ -98,6 +103,31 @@ async def confirm_email(
 ):
     user = await auth_service.confirm_email(db, payload.token)
     return UserPublic.model_validate(user)
+
+
+@router.post("/verify-email-code", response_model=UserPublic)
+async def verify_email_code(
+    payload: VerifyEmailCodeRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    user = await auth_service.verify_email_code(db, payload.user_id, payload.code)
+    return UserPublic.model_validate(user)
+
+
+@router.post("/resend-code", status_code=status.HTTP_202_ACCEPTED)
+async def resend_code(
+    payload: ResendCodeRequest,
+    bg: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    user = await db.scalar(select(User).where(User.id == payload.user_id))
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.is_email_verified:
+        raise HTTPException(status_code=400, detail="Email уже подтверждён")
+    code = await auth_service.create_verification_code(db, user)
+    bg.add_task(email_service.send_verification_code_email, user.email, code)
+    return {"detail": "Код отправлен"}
 
 
 @router.post("/resend-confirmation", status_code=status.HTTP_202_ACCEPTED)

@@ -5,13 +5,10 @@ import { usePathname } from "next/navigation";
 import {
   CreditCard,
   Gift,
-  Key,
   LayoutDashboard,
-  Bell,
   Settings,
   ShieldCheck,
   Users,
-  FileText,
   DollarSign,
 } from "lucide-react";
 
@@ -20,11 +17,8 @@ import { cn } from "@/lib/utils";
 
 const userNav = [
   { href: "/dashboard", label: "Главная", icon: LayoutDashboard },
-  { href: "/billing", label: "Биллинг", icon: CreditCard },
+  { href: "/billing", label: "Подписка", icon: CreditCard },
   { href: "/referrals", label: "Рефералы", icon: Gift },
-  { href: "/api-keys", label: "API ключи", icon: Key },
-  { href: "/notifications", label: "Уведомления", icon: Bell },
-  { href: "/demo", label: "Демо", icon: FileText },
   { href: "/settings", label: "Настройки", icon: Settings },
 ];
 

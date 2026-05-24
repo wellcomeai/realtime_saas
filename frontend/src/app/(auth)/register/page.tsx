@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { authApi } from "@/api/auth";
+import { useAuthStore } from "@/store/authStore";
 
 const schema = z
   .object({
@@ -32,9 +35,16 @@ function readCookie(name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+interface PendingState {
+  userId: string;
+  email: string;
+  devCode: string | null;
+}
+
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
   const [refCode, setRefCode] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingState | null>(null);
   const {
     register,
     handleSubmit,
@@ -47,12 +57,32 @@ export default function RegisterPage() {
 
   async function onSubmit(values: FormValues) {
     try {
-      await registerUser(values.email, values.password, refCode ?? undefined);
-      toast.success("Регистрация успешна! Проверьте почту для подтверждения email.");
+      const res = await registerUser(
+        values.email,
+        values.password,
+        refCode ?? undefined,
+      );
+      if (res.pendingVerification) {
+        setPending({
+          userId: res.userId,
+          email: values.email,
+          devCode: res.devCode,
+        });
+      }
     } catch (e) {
       const err = e as AxiosError<{ detail?: string }>;
       toast.error(err.response?.data?.detail ?? "Не удалось зарегистрироваться");
     }
+  }
+
+  if (pending) {
+    return (
+      <VerifyCodeForm
+        userId={pending.userId}
+        email={pending.email}
+        devCode={pending.devCode}
+      />
+    );
   }
 
   return (
@@ -109,6 +139,163 @@ export default function RegisterPage() {
           Войти
         </Link>
       </p>
+    </div>
+  );
+}
+
+function VerifyCodeForm({
+  userId,
+  email,
+  devCode,
+}: {
+  userId: string;
+  email: string;
+  devCode: string | null;
+}) {
+  const router = useRouter();
+  const setUser = useAuthStore((s) => s.setUser);
+  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [cooldown, setCooldown] = useState(60);
+  const [resending, setResending] = useState(false);
+  const inputs = useRef<Array<HTMLInputElement | null>>([]);
+
+  useEffect(() => {
+    inputs.current[0]?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
+
+  function setDigit(idx: number, val: string) {
+    const clean = val.replace(/\D/g, "").slice(-1);
+    setDigits((prev) => {
+      const next = [...prev];
+      next[idx] = clean;
+      return next;
+    });
+    if (clean && idx < 5) inputs.current[idx + 1]?.focus();
+  }
+
+  function onKeyDown(idx: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace" && !digits[idx] && idx > 0) {
+      inputs.current[idx - 1]?.focus();
+    }
+  }
+
+  function onPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!text) return;
+    e.preventDefault();
+    const arr = ["", "", "", "", "", ""];
+    for (let i = 0; i < text.length; i++) arr[i] = text[i];
+    setDigits(arr);
+    const focusIdx = Math.min(text.length, 5);
+    inputs.current[focusIdx]?.focus();
+  }
+
+  async function submit() {
+    const code = digits.join("");
+    if (code.length !== 6) {
+      setError("Введите 6-значный код");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const user = await authApi.verifyEmailCode(userId, code);
+      setUser(user);
+      toast.success("Email подтверждён");
+      router.push("/dashboard");
+    } catch (e) {
+      const err = e as AxiosError<{ detail?: string }>;
+      setError(err.response?.data?.detail ?? "Ошибка подтверждения");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function resend() {
+    setResending(true);
+    try {
+      await authApi.resendCode(userId);
+      toast.success("Код отправлен повторно");
+      setCooldown(60);
+      setDigits(["", "", "", "", "", ""]);
+      setError(null);
+      inputs.current[0]?.focus();
+    } catch (e) {
+      const err = e as AxiosError<{ detail?: string }>;
+      toast.error(err.response?.data?.detail ?? "Не удалось отправить код");
+    } finally {
+      setResending(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border bg-card p-6 shadow-sm">
+      <h1 className="text-2xl font-bold">Подтвердите email</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Мы отправили 6-значный код на {email}
+      </p>
+
+      {devCode && (
+        <div className="mt-4 rounded-md border border-yellow-400 bg-yellow-50 p-3 text-sm text-yellow-900">
+          DEV MODE: ваш код — <span className="font-mono font-bold">{devCode}</span>
+        </div>
+      )}
+
+      <div
+        className="mt-6 flex gap-2"
+        onPaste={onPaste}
+      >
+        {digits.map((d, i) => (
+          <input
+            key={i}
+            ref={(el) => {
+              inputs.current[i] = el;
+            }}
+            inputMode="numeric"
+            maxLength={1}
+            value={d}
+            onChange={(e) => setDigit(i, e.target.value)}
+            onKeyDown={(e) => onKeyDown(i, e)}
+            className="h-12 w-12 rounded-md border border-input bg-background text-center text-xl font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+          />
+        ))}
+      </div>
+
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+
+      <Button
+        type="button"
+        className="mt-6 w-full"
+        onClick={submit}
+        disabled={submitting}
+      >
+        {submitting ? "Проверка..." : "Подтвердить"}
+      </Button>
+
+      <div className="mt-4 text-center text-sm">
+        {cooldown > 0 ? (
+          <span className="text-muted-foreground">
+            Отправить код повторно через {cooldown} сек
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={resend}
+            disabled={resending}
+            className="font-medium text-primary hover:underline disabled:opacity-50"
+          >
+            {resending ? "Отправка..." : "Отправить код повторно"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

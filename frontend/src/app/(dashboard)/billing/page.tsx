@@ -48,7 +48,7 @@ export default function BillingPage() {
   return (
     <>
       <div>
-        <h1 className="text-3xl font-bold">Биллинг</h1>
+        <h1 className="text-3xl font-bold">Подписка</h1>
         <p className="text-sm text-muted-foreground">
           Управление подпиской и платежами.
         </p>

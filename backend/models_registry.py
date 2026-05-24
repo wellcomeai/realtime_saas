@@ -4,6 +4,7 @@
 модели зарегистрированы в Base.metadata.
 """
 from modules.auth.models import (  # noqa: F401
+    EmailVerificationCode,
     EmailVerificationToken,
     PasswordResetToken,
     User,
@@ -16,5 +17,3 @@ from modules.referrals.models import (  # noqa: F401
     ReferralPayout,
 )
 from modules.api_keys.models import ApiKey, RateLimitEntry  # noqa: F401
-from modules.notifications.models import Notification  # noqa: F401
-from modules.demo_notes.models import DemoNote  # noqa: F401

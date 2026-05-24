@@ -63,6 +63,21 @@ async def send_confirmation_email(to: str, token: str) -> None:
     await send_email(to, f"Подтверждение email — {settings.app_name}", html)
 
 
+async def send_verification_code_email(to: str, code: str) -> None:
+    if not settings.smtp_user:
+        logger.info("[email:dev] Verification code for %s: %s", to, code)
+        return
+    html = (
+        f"<!doctype html><html><body style=\"font-family:sans-serif;padding:24px\">"
+        f"<h2>{settings.app_name}</h2>"
+        f"<p>Ваш код подтверждения:</p>"
+        f"<p style=\"font-size:32px;font-weight:bold;letter-spacing:6px\">{code}</p>"
+        f"<p style=\"color:#666;font-size:13px\">Код действителен 10 минут.</p>"
+        f"</body></html>"
+    )
+    await send_email(to, f"Код подтверждения — {settings.app_name}", html)
+
+
 async def send_welcome_email(to: str) -> None:
     html = render("welcome.html")
     await send_email(to, f"Добро пожаловать в {settings.app_name}!", html)

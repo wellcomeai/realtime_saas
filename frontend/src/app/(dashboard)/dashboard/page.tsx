@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CreditCard, Gift, Key, Bell } from "lucide-react";
+import { CreditCard, Gift, Settings } from "lucide-react";
 
 import {
   Card,
@@ -13,19 +13,13 @@ import {
 } from "@/components/ui/card";
 import { TrialBanner } from "@/components/billing/TrialBanner";
 import { EmailBanner } from "@/components/EmailBanner";
-import { notificationsApi } from "@/api/notifications";
 import { referralsApi } from "@/api/referrals";
-import { formatDateTime, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data: stats } = useQuery({
     queryKey: ["referrals-stats"],
     queryFn: () => referralsApi.stats(),
-  });
-
-  const { data: notifs } = useQuery({
-    queryKey: ["notifications-recent"],
-    queryFn: () => notificationsApi.list(3, 0),
   });
 
   return (
@@ -40,7 +34,7 @@ export default function DashboardPage() {
       <EmailBanner />
       <TrialBanner />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Заработано рефералами</CardDescription>
@@ -70,33 +64,17 @@ export default function DashboardPage() {
             </Link>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Уведомлений</CardDescription>
-            <CardTitle className="text-2xl">{notifs?.length ?? 0}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/notifications"
-              className="text-xs text-primary hover:underline"
-            >
-              Все уведомления →
-            </Link>
-          </CardContent>
-        </Card>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Быстрые действия</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
+        <CardContent className="grid gap-3 md:grid-cols-3">
           {[
-            { href: "/billing", icon: CreditCard, label: "Биллинг" },
+            { href: "/billing", icon: CreditCard, label: "Подписка" },
             { href: "/referrals", icon: Gift, label: "Рефералы" },
-            { href: "/api-keys", icon: Key, label: "API ключи" },
-            { href: "/notifications", icon: Bell, label: "Уведомления" },
+            { href: "/settings", icon: Settings, label: "Настройки" },
           ].map((q) => {
             const Icon = q.icon;
             return (
@@ -110,34 +88,6 @@ export default function DashboardPage() {
               </Link>
             );
           })}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Последние уведомления</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {notifs && notifs.length > 0 ? (
-            <ul className="divide-y">
-              {notifs.map((n) => (
-                <li key={n.id} className="flex justify-between py-3 text-sm">
-                  <div>
-                    <div className="font-medium">{n.title}</div>
-                    <div className="text-muted-foreground">{n.body}</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatDateTime(n.created_at)}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Пока пусто — здесь появятся уведомления о платежах, выплатах и
-              изменениях в подписке.
-            </p>
-          )}
         </CardContent>
       </Card>
     </>

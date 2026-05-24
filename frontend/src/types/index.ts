@@ -24,6 +24,8 @@ export interface AuthResponse {
   refresh_token: string;
   token_type: string;
   user: User;
+  pending_verification?: boolean;
+  dev_code?: string | null;
 }
 
 export interface TokenPair {
@@ -102,16 +104,6 @@ export interface ApiKey {
 
 export interface ApiKeyCreated extends ApiKey {
   full_key: string;
-}
-
-export interface Notification {
-  id: UUID;
-  type: string;
-  title: string;
-  body: string;
-  is_read: boolean;
-  notification_metadata: Record<string, unknown> | null;
-  created_at: string;
 }
 
 export interface AdminStats {

@@ -34,6 +34,18 @@ export const authApi = {
     await apiClient.post("/api/v1/auth/resend-confirmation", { email });
   },
 
+  async verifyEmailCode(user_id: string, code: string): Promise<User> {
+    const r = await apiClient.post("/api/v1/auth/verify-email-code", {
+      user_id,
+      code,
+    });
+    return r.data;
+  },
+
+  async resendCode(user_id: string): Promise<void> {
+    await apiClient.post("/api/v1/auth/resend-code", { user_id });
+  },
+
   async forgotPassword(email: string): Promise<void> {
     await apiClient.post("/api/v1/auth/forgot-password", { email });
   },

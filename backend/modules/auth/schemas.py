@@ -36,6 +36,15 @@ class ResendConfirmationRequest(BaseModel):
     email: EmailStr
 
 
+class VerifyEmailCodeRequest(BaseModel):
+    user_id: UUID
+    code: str = Field(min_length=6, max_length=6)
+
+
+class ResendCodeRequest(BaseModel):
+    user_id: UUID
+
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
@@ -59,3 +68,5 @@ class UserPublic(BaseModel):
 
 class AuthResponse(TokenPair):
     user: UserPublic
+    pending_verification: bool = False
+    dev_code: str | None = None
