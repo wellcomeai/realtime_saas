@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
@@ -33,12 +33,9 @@ async def robokassa_webhook(
     if not verify_result_signature(OutSum, InvId, SignatureValue):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
-    try:
-        payment_id = UUID(InvId)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid InvId")
-
-    payment = await db.get(Payment, payment_id)
+    payment = await db.scalar(
+        select(Payment).where(Payment.provider_payment_id == InvId)
+    )
     if payment is None:
         raise HTTPException(status_code=404, detail="Payment not found")
 
@@ -52,7 +49,6 @@ async def robokassa_webhook(
 
     if payout is not None:
         from modules.auth.models import User
-        from sqlalchemy import select
 
         referrer = await db.scalar(select(User).where(User.id == payout.referrer_id))
         if referrer:

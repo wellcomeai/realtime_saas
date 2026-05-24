@@ -6,6 +6,7 @@ PostgreSQL fallback (см. modules/rate_limit/service.py).
 """
 from __future__ import annotations
 
+from decimal import Decimal
 from functools import lru_cache
 
 from pydantic import Field
@@ -71,6 +72,21 @@ class Settings(BaseSettings):
     trial_days: int = Field(default=3)
     referral_commission_percent: int = Field(default=20)
 
+    # === Планы подписки ===
+    plan_basic_name: str = Field(default="Basic")
+    plan_basic_price: Decimal = Field(default=Decimal("990"))
+    plan_basic_interval: str = Field(default="month")
+    plan_basic_features: str = Field(
+        default="До 100 запросов в день,Email поддержка,Базовая аналитика"
+    )
+
+    plan_pro_name: str = Field(default="Pro")
+    plan_pro_price: Decimal = Field(default=Decimal("2990"))
+    plan_pro_interval: str = Field(default="month")
+    plan_pro_features: str = Field(
+        default="Безлимит запросов,Приоритетная поддержка,API доступ,Расширенная аналитика"
+    )
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
@@ -78,6 +94,14 @@ class Settings(BaseSettings):
     @property
     def redis_enabled(self) -> bool:
         return bool(self.redis_url)
+
+    @property
+    def plan_basic_features_list(self) -> list[str]:
+        return [f.strip() for f in self.plan_basic_features.split(",") if f.strip()]
+
+    @property
+    def plan_pro_features_list(self) -> list[str]:
+        return [f.strip() for f in self.plan_pro_features.split(",") if f.strip()]
 
 
 @lru_cache

@@ -1,6 +1,7 @@
 """Бизнес-логика биллинга."""
 from __future__ import annotations
 
+import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Sequence
@@ -50,6 +51,8 @@ async def create_payment_for_plan(
 
     sub = await get_user_subscription(db, user.id)
 
+    numeric_inv_id = str(int(time.time() * 1000))
+
     payment = Payment(
         user_id=user.id,
         subscription_id=sub.id if sub else None,
@@ -57,6 +60,7 @@ async def create_payment_for_plan(
         currency=plan.currency,
         status=PaymentStatus.PENDING,
         provider=provider_enum,
+        provider_payment_id=numeric_inv_id,
         payment_metadata={"plan_id": str(plan.id), "plan_name": plan.name},
     )
     db.add(payment)
@@ -64,7 +68,7 @@ async def create_payment_for_plan(
 
     if provider_enum == PaymentProvider.ROBOKASSA:
         url = robokassa.build_payment_url(
-            inv_id=str(payment.id),
+            inv_id=numeric_inv_id,
             amount=plan.price,
             description=f"{settings.app_name} — {plan.name}",
             user_email=user.email,
@@ -74,7 +78,6 @@ async def create_payment_for_plan(
     else:
         raise HTTPException(status_code=400, detail="Unsupported provider")
 
-    payment.provider_payment_id = str(payment.id)
     await db.commit()
     await db.refresh(payment)
     return url, payment
