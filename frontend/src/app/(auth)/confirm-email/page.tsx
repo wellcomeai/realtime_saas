@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { AxiosError } from "axios";
 
@@ -10,7 +10,7 @@ import { authApi } from "@/api/auth";
 
 type State = "loading" | "success" | "error";
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailInner() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token");
@@ -69,5 +69,19 @@ export default function ConfirmEmailPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-lg border bg-card p-8 text-center shadow-sm">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <ConfirmEmailInner />
+    </Suspense>
   );
 }
