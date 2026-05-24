@@ -18,6 +18,8 @@ import { useAuthStore } from "@/store/authStore";
 
 const schema = z
   .object({
+    first_name: z.string().min(1, "Обязательное поле").max(100),
+    last_name: z.string().min(1, "Обязательное поле").max(100),
     email: z.string().email("Введите корректный email"),
     password: z.string().min(8, "Минимум 8 символов"),
     confirm: z.string(),
@@ -60,6 +62,8 @@ export default function RegisterPage() {
       const res = await registerUser(
         values.email,
         values.password,
+        values.first_name,
+        values.last_name,
         refCode ?? undefined,
       );
       if (res.pendingVerification) {
@@ -100,6 +104,20 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <div>
+          <Label htmlFor="first_name">Имя</Label>
+          <Input id="first_name" {...register("first_name")} />
+          {errors.first_name && (
+            <p className="mt-1 text-xs text-destructive">{errors.first_name.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="last_name">Фамилия</Label>
+          <Input id="last_name" {...register("last_name")} />
+          {errors.last_name && (
+            <p className="mt-1 text-xs text-destructive">{errors.last_name.message}</p>
+          )}
+        </div>
         <div>
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" {...register("email")} />

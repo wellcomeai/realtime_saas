@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
-from modules.auth.models import User
+from modules.auth.models import User, UserProfile
 from modules.billing.models import Payment
 from modules.referrals.models import (
     ReferralCode,
@@ -107,6 +107,40 @@ async def calculate_stats(db: AsyncSession, user: User) -> ReferralStats:
         total_earned=Decimal(total_earned or 0),
         pending_payout=Decimal(pending or 0),
     )
+
+
+async def list_referred_users(
+    db: AsyncSession, user: User
+) -> list[dict]:
+    code = await db.scalar(
+        select(ReferralCode).where(ReferralCode.user_id == user.id)
+    )
+    if code is None:
+        return []
+
+    rows = await db.execute(
+        select(
+            User.email,
+            UserProfile.first_name,
+            UserProfile.last_name,
+            ReferralLink.status,
+            ReferralLink.created_at,
+        )
+        .join(ReferralLink, ReferralLink.referred_user_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .where(ReferralLink.referral_code_id == code.id)
+        .order_by(ReferralLink.created_at.desc())
+    )
+    return [
+        {
+            "email": row.email,
+            "first_name": row.first_name,
+            "last_name": row.last_name,
+            "status": row.status.value,
+            "created_at": row.created_at,
+        }
+        for row in rows
+    ]
 
 
 async def list_payouts(

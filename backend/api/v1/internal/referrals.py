@@ -14,6 +14,7 @@ from modules.referrals.schemas import (
     MyReferralCode,
     ReferralPayoutPublic,
     ReferralStats,
+    ReferralUserPublic,
 )
 
 router = APIRouter(prefix="/referrals", tags=["referrals"])
@@ -48,3 +49,11 @@ async def payouts(
 ):
     items = await ref_service.list_payouts(db, user, limit, offset)
     return [ReferralPayoutPublic.model_validate(p) for p in items]
+
+
+@router.get("/referred-users", response_model=list[ReferralUserPublic])
+async def referred_users(
+    user: CurrentUser, db: Annotated[AsyncSession, Depends(get_db)]
+):
+    items = await ref_service.list_referred_users(db, user)
+    return [ReferralUserPublic.model_validate(i) for i in items]

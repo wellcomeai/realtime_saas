@@ -3,6 +3,7 @@ import type {
   MyReferralCode,
   ReferralPayout,
   ReferralStats,
+  ReferralUser,
 } from "@/types";
 
 export const referralsApi = {
@@ -20,6 +21,11 @@ export const referralsApi = {
     const r = await apiClient.get("/api/v1/referrals/payouts", {
       params: { limit, offset },
     });
+    return r.data;
+  },
+
+  async referredUsers(): Promise<ReferralUser[]> {
+    const r = await apiClient.get("/api/v1/referrals/referred-users");
     return r.data;
   },
 };

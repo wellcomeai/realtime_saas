@@ -46,7 +46,7 @@ async def register_user(
     db.add(user)
     await db.flush()
 
-    db.add(UserProfile(user_id=user.id))
+    db.add(UserProfile(user_id=user.id, first_name=payload.first_name, last_name=payload.last_name))
     db.add(
         Subscription(
             user_id=user.id,

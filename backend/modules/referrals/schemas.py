@@ -35,3 +35,13 @@ class AdminReferralPayoutPublic(ReferralPayoutPublic):
     referrer_id: UUID
     referred_user_id: UUID
     payment_id: UUID
+
+
+class ReferralUserPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    email: str
+    first_name: str | None = None
+    last_name: str | None = None
+    status: str
+    created_at: datetime

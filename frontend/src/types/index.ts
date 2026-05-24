@@ -112,3 +112,11 @@ export interface AdminStats {
   mrr: string;
   pending_payouts: string;
 }
+
+export interface ReferralUser {
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  status: "registered" | "trial" | "converted";
+  created_at: string;
+}

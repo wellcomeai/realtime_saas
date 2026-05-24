@@ -9,15 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ReferralWidget } from "@/components/referrals/ReferralWidget";
 import { PayoutHistory } from "@/components/referrals/PayoutHistory";
 import { referralsApi } from "@/api/referrals";
-import { formatMoney } from "@/lib/utils";
+import { formatDateTime, formatMoney } from "@/lib/utils";
 
 export default function ReferralsPage() {
   const { data } = useQuery({
     queryKey: ["referrals-my-code"],
     queryFn: () => referralsApi.myCode(),
+  });
+
+  const { data: referredList } = useQuery({
+    queryKey: ["referrals-referred-users"],
+    queryFn: () => referralsApi.referredUsers(),
   });
 
   return (
@@ -67,6 +73,51 @@ export default function ReferralsPage() {
       </div>
 
       <PayoutHistory />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Приглашённые пользователи</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!referredList || referredList.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Вы ещё никого не пригласили.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                  <th className="py-2">Имя</th>
+                  <th className="py-2">Email</th>
+                  <th className="py-2">Статус</th>
+                  <th className="py-2">Дата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {referredList.map((u) => (
+                  <tr key={u.email} className="border-b last:border-0">
+                    <td className="py-3">
+                      {u.first_name || u.last_name
+                        ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
+                        : "—"}
+                    </td>
+                    <td className="py-3">{u.email}</td>
+                    <td className="py-3">
+                      <Badge variant={
+                        u.status === "converted" ? "success" :
+                        u.status === "trial" ? "warning" : "secondary"
+                      }>
+                        {u.status}
+                      </Badge>
+                    </td>
+                    <td className="py-3 text-muted-foreground">
+                      {formatDateTime(u.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

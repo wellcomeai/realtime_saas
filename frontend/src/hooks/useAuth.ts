@@ -51,9 +51,11 @@ export function useAuth() {
     async register(
       email: string,
       password: string,
+      first_name: string,
+      last_name: string,
       referral_code?: string,
     ) {
-      const res = await authApi.register({ email, password, referral_code });
+      const res = await authApi.register({ email, password, first_name, last_name, referral_code });
       setSession(res.user, res.access_token, res.refresh_token);
       if (res.pending_verification) {
         return {

@@ -5,6 +5,8 @@ export const authApi = {
   async register(data: {
     email: string;
     password: string;
+    first_name: string;
+    last_name: string;
     referral_code?: string;
   }): Promise<AuthResponse> {
     const r = await apiClient.post("/api/v1/auth/register", data);

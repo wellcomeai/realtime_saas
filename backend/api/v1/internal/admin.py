@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from dependencies import AdminUser
+from dependencies import AdminUser, require_admin
 from modules.admin import service as admin_service
 from modules.auth.models import UserRole
 from modules.auth.schemas import UserPublic
@@ -18,7 +18,7 @@ from modules.referrals import service as ref_service
 from modules.referrals.models import ReferralPayoutStatus
 from modules.referrals.schemas import AdminReferralPayoutPublic
 
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(AdminUser)])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 
 class RoleUpdate(BaseModel):
