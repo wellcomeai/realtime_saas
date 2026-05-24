@@ -58,7 +58,13 @@ class Plan(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, default=0)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="RUB")
     interval: Mapped[PlanInterval] = mapped_column(
-        Enum(PlanInterval, name="plan_interval"), default=PlanInterval.MONTH, nullable=False
+        Enum(
+            PlanInterval,
+            name="plan_interval",
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        default=PlanInterval.MONTH,
+        nullable=False,
     )
     features: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -84,7 +90,11 @@ class Subscription(Base):
         PG_UUID(as_uuid=True), ForeignKey("plans.id"), nullable=True
     )
     status: Mapped[SubscriptionStatus] = mapped_column(
-        Enum(SubscriptionStatus, name="subscription_status"),
+        Enum(
+            SubscriptionStatus,
+            name="subscription_status",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=SubscriptionStatus.TRIAL,
         nullable=False,
     )
@@ -128,12 +138,21 @@ class Payment(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="RUB")
     status: Mapped[PaymentStatus] = mapped_column(
-        Enum(PaymentStatus, name="payment_status"),
+        Enum(
+            PaymentStatus,
+            name="payment_status",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=PaymentStatus.PENDING,
         nullable=False,
     )
     provider: Mapped[PaymentProvider] = mapped_column(
-        Enum(PaymentProvider, name="payment_provider"), nullable=False
+        Enum(
+            PaymentProvider,
+            name="payment_provider",
+            values_callable=lambda x: [e.value for e in x],
+        ),
+        nullable=False,
     )
     provider_payment_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True, index=True

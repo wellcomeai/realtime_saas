@@ -63,7 +63,11 @@ class ReferralLink(Base):
         nullable=False,
     )
     status: Mapped[ReferralLinkStatus] = mapped_column(
-        Enum(ReferralLinkStatus, name="referral_link_status"),
+        Enum(
+            ReferralLinkStatus,
+            name="referral_link_status",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=ReferralLinkStatus.REGISTERED,
         nullable=False,
     )
@@ -96,7 +100,11 @@ class ReferralPayout(Base):
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[ReferralPayoutStatus] = mapped_column(
-        Enum(ReferralPayoutStatus, name="referral_payout_status"),
+        Enum(
+            ReferralPayoutStatus,
+            name="referral_payout_status",
+            values_callable=lambda x: [e.value for e in x],
+        ),
         default=ReferralPayoutStatus.PENDING,
         nullable=False,
     )
