@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Bell,
   CreditCard,
@@ -6,6 +8,8 @@ import {
   Lock,
   ShieldCheck,
 } from "lucide-react";
+
+import { useInView } from "@/hooks/useInView";
 
 const features = [
   {
@@ -41,23 +45,29 @@ const features = [
 ];
 
 export function Features() {
+  const [ref, isInView] = useInView();
+
   return (
-    <section id="features" className="container py-24">
+    <section id="features" className="container py-24" ref={ref as React.RefObject<HTMLElement>}>
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold">Всё, что нужно для запуска SaaS</h2>
+        <h2 className="font-display text-3xl font-bold">Всё, что нужно для запуска SaaS</h2>
         <p className="mt-3 text-muted-foreground">
           Не пишите рутинную инфраструктуру — сосредоточьтесь на продукте.
         </p>
       </div>
       <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => {
+        {features.map((f, i) => {
           const Icon = f.icon;
           return (
             <div
               key={f.title}
-              className="rounded-lg border bg-card p-6 transition-shadow hover:shadow-md"
+              className={[
+                "group rounded-lg border bg-card p-6 hover:-translate-y-1 hover:border-primary/30 hover:shadow-md transition-all duration-300",
+                isInView ? "animate-fade-up" : "opacity-0",
+              ].join(" ")}
+              style={isInView ? { animationDelay: `${i * 0.1}s` } : undefined}
             >
-              <Icon className="h-6 w-6" />
+              <Icon className="h-6 w-6 transition-transform duration-200 group-hover:scale-110 group-hover:text-primary" />
               <div className="mt-4 font-semibold">{f.title}</div>
               <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
             </div>

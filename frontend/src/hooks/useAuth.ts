@@ -9,12 +9,12 @@ import { usersApi } from "@/api/users";
 import { useAuthStore } from "@/store/authStore";
 
 export function useAuth() {
-  const { user, isLoading, setUser, setLoading, setSession, logout } =
+  const { user, isLoading, initialized, setUser, setLoading, setSession, logout } =
     useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (user || !tokenStorage.access) {
+    if (initialized || !tokenStorage.access) {
       setLoading(false);
       return;
     }

@@ -46,6 +46,29 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        display: ['Bricolage Grotesque', 'sans-serif'],
+        body:    ['DM Sans', 'sans-serif'],
+      },
+      keyframes: {
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(24px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to:   { opacity: '1' },
+        },
+        shimmer: {
+          from: { backgroundPosition: '-200% center' },
+          to:   { backgroundPosition:  '200% center' },
+        },
+      },
+      animation: {
+        'fade-up':    'fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'fade-in':    'fade-in 0.5s ease both',
+        shimmer:      'shimmer 2s linear infinite',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

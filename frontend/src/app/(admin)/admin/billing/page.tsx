@@ -10,8 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "@/components/ui/pagination";
 import { adminApi } from "@/api/admin";
 import { formatDateTime, formatMoney } from "@/lib/utils";
+
+const PAGE_LIMIT = 20;
 
 const statusVariant: Record<
   string,
@@ -24,22 +27,25 @@ const statusVariant: Record<
 };
 
 export default function AdminBillingPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-payments"],
-    queryFn: () => adminApi.listPayments(200),
-  });
-
   const [status, setStatus] = useState("");
   const [provider, setProvider] = useState("");
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-payments", page],
+    queryFn: () => adminApi.listPayments(PAGE_LIMIT * page),
+  });
 
   const filtered = useMemo(() => {
     if (!data) return [];
-    return data.filter((p) => {
+    const all = data.filter((p) => {
       if (status && p.status !== status) return false;
       if (provider && p.provider !== provider) return false;
       return true;
     });
-  }, [data, status, provider]);
+    const start = (page - 1) * PAGE_LIMIT;
+    return all.slice(start, start + PAGE_LIMIT);
+  }, [data, status, provider, page]);
 
   return (
     <>
@@ -55,7 +61,7 @@ export default function AdminBillingPage() {
           <div className="flex gap-3">
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               className="h-10 rounded-md border border-input bg-background px-3 text-sm"
             >
               <option value="">Все статусы</option>
@@ -66,7 +72,7 @@ export default function AdminBillingPage() {
             </select>
             <select
               value={provider}
-              onChange={(e) => setProvider(e.target.value)}
+              onChange={(e) => { setProvider(e.target.value); setPage(1); }}
               className="h-10 rounded-md border border-input bg-background px-3 text-sm"
             >
               <option value="">Все провайдеры</option>
@@ -82,32 +88,41 @@ export default function AdminBillingPage() {
           {isLoading ? (
             <div className="p-6 text-sm text-muted-foreground">Загрузка...</div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-                  <th className="px-6 py-3">Дата</th>
-                  <th className="px-6 py-3">Сумма</th>
-                  <th className="px-6 py-3">Провайдер</th>
-                  <th className="px-6 py-3">Статус</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr key={p.id} className="border-b last:border-0">
-                    <td className="px-6 py-3">{formatDateTime(p.created_at)}</td>
-                    <td className="px-6 py-3">
-                      {formatMoney(p.amount, p.currency)}
-                    </td>
-                    <td className="px-6 py-3">{p.provider}</td>
-                    <td className="px-6 py-3">
-                      <Badge variant={statusVariant[p.status] ?? "default"}>
-                        {p.status}
-                      </Badge>
-                    </td>
+            <>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                    <th className="px-6 py-3">Дата</th>
+                    <th className="px-6 py-3">Сумма</th>
+                    <th className="px-6 py-3">Провайдер</th>
+                    <th className="px-6 py-3">Статус</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => (
+                    <tr key={p.id} className="border-b last:border-0">
+                      <td className="px-6 py-3">{formatDateTime(p.created_at)}</td>
+                      <td className="px-6 py-3">
+                        {formatMoney(p.amount, p.currency)}
+                      </td>
+                      <td className="px-6 py-3">{p.provider}</td>
+                      <td className="px-6 py-3">
+                        <Badge variant={statusVariant[p.status] ?? "default"}>
+                          {p.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination
+                page={page}
+                limit={PAGE_LIMIT}
+                hasMore={filtered.length === PAGE_LIMIT}
+                onNext={() => setPage((p) => p + 1)}
+                onPrev={() => setPage((p) => Math.max(1, p - 1))}
+              />
+            </>
           )}
         </CardContent>
       </Card>

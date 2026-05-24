@@ -11,11 +11,15 @@ export function TrialBanner() {
 
   if (!isTrial) return null;
 
+  const isUrgent = !isExpired && daysLeft <= 1;
+
   return (
     <div
       className={
         isExpired
           ? "flex items-center justify-between rounded-lg border border-destructive/40 bg-destructive/10 p-4"
+          : isUrgent
+          ? "flex items-center justify-between rounded-lg border border-orange-400/40 bg-orange-50 p-4"
           : "flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-4"
       }
     >
@@ -29,7 +33,10 @@ export function TrialBanner() {
           ) : (
             <>
               <span className="font-medium">
-                Триал активен, осталось {daysLeft} дн.
+                Триал активен,{" "}
+                {daysLeft === 0
+                  ? "последний день"
+                  : `осталось ${daysLeft} дн.`}
               </span>
               <span className="ml-2 text-muted-foreground">
                 Выберите тариф, чтобы не потерять доступ.

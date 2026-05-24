@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -19,6 +21,29 @@ import { usePlans, useSubscription } from "@/hooks/useBilling";
 import { billingApi } from "@/api/billing";
 import { formatDateTime } from "@/lib/utils";
 import type { Plan } from "@/types";
+
+function PaymentStatusHandler() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const status = params.get("status");
+    if (!status) return;
+
+    if (status === "success") {
+      toast.success("Подписка активирована!");
+      qc.invalidateQueries({ queryKey: ["subscription"] });
+    } else if (status === "failed") {
+      toast.error("Платёж не прошёл. Попробуйте ещё раз.");
+    }
+
+    router.replace("/billing");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
+}
 
 export default function BillingPage() {
   const { data: plans } = usePlans();
@@ -47,6 +72,10 @@ export default function BillingPage() {
 
   return (
     <>
+      <Suspense>
+        <PaymentStatusHandler />
+      </Suspense>
+
       <div>
         <h1 className="text-3xl font-bold">Подписка</h1>
         <p className="text-sm text-muted-foreground">

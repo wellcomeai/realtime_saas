@@ -1,5 +1,7 @@
 "use client";
 
+import { CreditCard } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -7,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatDateTime, formatMoney } from "@/lib/utils";
 import { usePayments } from "@/hooks/useBilling";
 
@@ -32,7 +35,12 @@ export function PaymentHistory() {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Загрузка...</p>
         ) : !data || data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Платежей пока нет.</p>
+          <EmptyState
+            icon={CreditCard}
+            title="Платежей пока нет"
+            description="Выберите тариф — история появится здесь"
+            action={{ label: "Выбрать тариф", href: "/billing" }}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

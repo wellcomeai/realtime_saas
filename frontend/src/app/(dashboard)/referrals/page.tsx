@@ -10,10 +10,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ReferralWidget } from "@/components/referrals/ReferralWidget";
 import { PayoutHistory } from "@/components/referrals/PayoutHistory";
 import { referralsApi } from "@/api/referrals";
 import { formatDateTime, formatMoney } from "@/lib/utils";
+import { Users } from "lucide-react";
 
 export default function ReferralsPage() {
   const { data } = useQuery({
@@ -80,7 +82,11 @@ export default function ReferralsPage() {
         </CardHeader>
         <CardContent>
           {!referredList || referredList.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Вы ещё никого не пригласили.</p>
+            <EmptyState
+              icon={Users}
+              title="Пока никого"
+              description="Поделитесь ссылкой — она выше"
+            />
           ) : (
             <table className="w-full text-sm">
               <thead>

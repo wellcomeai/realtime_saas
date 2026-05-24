@@ -1,9 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Gift } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { referralsApi } from "@/api/referrals";
 import { formatDateTime, formatMoney } from "@/lib/utils";
 
@@ -23,6 +26,15 @@ export function PayoutHistory() {
     queryFn: () => referralsApi.payouts(),
   });
 
+  async function copyReferralLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.origin + "/referrals");
+      toast.success("Ссылка скопирована");
+    } catch {
+      toast.error("Не удалось скопировать");
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -32,7 +44,12 @@ export function PayoutHistory() {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Загрузка...</p>
         ) : !data || data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Выплат пока нет.</p>
+          <EmptyState
+            icon={Gift}
+            title="Выплат пока нет"
+            description="Пригласите друга — получите 20% от его платежа"
+            action={{ label: "Скопировать ссылку", onClick: copyReferralLink }}
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>
