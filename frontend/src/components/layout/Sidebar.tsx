@@ -94,7 +94,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      <div className="flex h-14 items-center border-b px-6">
+      <div className="flex h-14 items-center gap-2 border-b px-6">
+        <img src="/logo.png" alt="logo" style={{ height: '28px', width: '28px', borderRadius: '6px' }} />
         <span className="font-display font-semibold">OpenSaaS</span>
       </div>
       <NavLinks onNavigate={onNavigate} />

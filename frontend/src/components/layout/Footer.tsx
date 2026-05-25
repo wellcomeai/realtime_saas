@@ -49,7 +49,7 @@ export function Footer() {
               className="flex items-center gap-1.5 mb-3"
               style={{ textDecoration: 'none' }}
             >
-              <span style={{ color: '#0066FF', fontSize: '18px', lineHeight: 1 }}>▪</span>
+              <img src="/logo.png" alt="logo" style={{ height: '28px', width: '28px', borderRadius: '6px' }} />
               <span
                 style={{
                   fontWeight: 600,

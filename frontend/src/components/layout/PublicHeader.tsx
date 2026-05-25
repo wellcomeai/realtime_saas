@@ -45,7 +45,7 @@ export function PublicHeader() {
           className="flex items-center gap-1.5"
           style={{ textDecoration: 'none' }}
         >
-          <span style={{ color: '#0066FF', fontSize: '18px', lineHeight: 1 }}>▪</span>
+          <img src="/logo.png" alt="logo" style={{ height: '32px', width: '32px', borderRadius: '8px' }} />
           <span
             style={{
               fontFamily: 'Geist, sans-serif',
