@@ -70,23 +70,8 @@ export function WhatIsItSection() {
             {items.map((item, i) => (
               <div
                 key={item.title}
-                className="reveal"
-                style={{
-                  border: '1px solid rgba(0,0,0,0.07)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  background: 'white',
-                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-                  animationDelay: `${i * 0.1}s`,
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(0,102,255,0.2)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,102,255,0.08)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.07)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                className="reveal border border-black/[0.07] rounded-2xl p-6 bg-white transition-all duration-200 hover:border-[#0066FF]/20 hover:shadow-[0_8px_32px_rgba(0,102,255,0.08)]"
+                style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <div style={{ fontSize: '28px', marginBottom: '12px' }}>{item.icon}</div>
                 <div

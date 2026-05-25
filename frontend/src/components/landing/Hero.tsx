@@ -41,26 +41,7 @@ export function Hero() {
             href="https://github.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 group"
-            style={{
-              border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '100px',
-              padding: '6px 16px',
-              fontSize: '13px',
-              color: '#616161',
-              textDecoration: 'none',
-              transition: 'border-color 0.2s ease, color 0.2s ease',
-              background: 'rgba(255,255,255,0.7)',
-              backdropFilter: 'blur(8px)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = '#0066FF';
-              e.currentTarget.style.color = '#0066FF';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
-              e.currentTarget.style.color = '#616161';
-            }}
+            className="inline-flex items-center gap-2 group border border-black/10 rounded-full px-4 py-1.5 text-[13px] text-[#616161] no-underline bg-white/70 backdrop-blur-md transition-colors duration-200 hover:border-[#0066FF] hover:text-[#0066FF]"
           >
             <span>⚡</span>
             <span>Open Source · MIT · GitHub</span>

@@ -62,30 +62,7 @@ export function ManifestoSection() {
           href="https://github.com"
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            background: 'white',
-            color: '#111113',
-            borderRadius: '12px',
-            padding: '0 28px',
-            height: '52px',
-            fontSize: '15px',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            textDecoration: 'none',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
-          }}
+          className="inline-flex items-center gap-2.5 bg-white text-[#111113] rounded-xl px-7 h-[52px] text-[15px] font-semibold tracking-tight no-underline shadow-[0_4px_16px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)]"
         >
           <Github size={18} />
           ★ Звездануть на GitHub

@@ -52,30 +52,7 @@ export function CTA() {
             href="https://github.com"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: '#171717',
-              color: 'white',
-              borderRadius: '12px',
-              padding: '0 28px',
-              height: '52px',
-              fontSize: '15px',
-              fontWeight: 600,
-              letterSpacing: '-0.01em',
-              textDecoration: 'none',
-              transition: 'transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.background = '#000000';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.background = '#171717';
-            }}
+            className="inline-flex items-center gap-2 bg-[#171717] text-white rounded-xl px-7 h-[52px] text-[15px] font-semibold tracking-tight no-underline shadow-[0_4px_16px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-[1.02] hover:bg-black"
           >
             <Github size={18} />
             Клонировать на GitHub
@@ -85,30 +62,7 @@ export function CTA() {
             href="https://t.me/wellcome_ai"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: '#0066FF',
-              color: 'white',
-              borderRadius: '12px',
-              padding: '0 28px',
-              height: '52px',
-              fontSize: '15px',
-              fontWeight: 600,
-              letterSpacing: '-0.01em',
-              textDecoration: 'none',
-              transition: 'transform 0.15s ease, box-shadow 0.2s ease',
-              boxShadow: '0 4px 16px rgba(0, 102, 255, 0.3)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 8px 28px rgba(0, 102, 255, 0.5)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 102, 255, 0.3)';
-            }}
+            className="inline-flex items-center gap-2 bg-[#0066FF] text-white rounded-xl px-7 h-[52px] text-[15px] font-semibold tracking-tight no-underline shadow-[0_4px_16px_rgba(0,102,255,0.3)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(0,102,255,0.5)]"
           >
             <Send size={16} />
             Подписаться в Telegram

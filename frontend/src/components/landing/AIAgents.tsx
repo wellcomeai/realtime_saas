@@ -54,17 +54,7 @@ export function AIAgentsSection() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                color: '#0066FF',
-                fontSize: '15px',
-                fontWeight: 500,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
-              onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+              className="text-[#0066FF] text-[15px] font-medium no-underline inline-flex items-center gap-1 hover:underline"
             >
               Смотреть CLAUDE.md →
             </a>

@@ -28,21 +28,24 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down")
 
 
+_is_production = settings.environment.lower() == "production"
+
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
     description="OpenSaaS — open source SaaS boilerplate",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
+    openapi_url=None if _is_production else "/openapi.json",
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept"],
 )
 
 app.include_router(api_router)
@@ -58,5 +61,5 @@ async def root() -> dict:
     return {
         "name": settings.app_name,
         "version": "1.0.0",
-        "docs": "/docs",
+        "docs": None if _is_production else "/docs",
     }

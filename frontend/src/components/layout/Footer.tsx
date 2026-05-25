@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Github } from "lucide-react";
 
 const columns = [
@@ -49,7 +50,7 @@ export function Footer() {
               className="flex items-center gap-1.5 mb-3"
               style={{ textDecoration: 'none' }}
             >
-              <img src="/logo.png" alt="logo" style={{ height: '28px', width: '28px', borderRadius: '6px' }} />
+              <Image src="/logo.png" alt="logo" width={28} height={28} style={{ borderRadius: '6px' }} />
               <span
                 style={{
                   fontWeight: 600,
@@ -68,22 +69,7 @@ export function Footer() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginTop: '16px',
-                fontSize: '13px',
-                color: '#616161',
-                textDecoration: 'none',
-                background: 'white',
-                border: '1px solid rgba(0,0,0,0.1)',
-                borderRadius: '8px',
-                padding: '6px 12px',
-                transition: 'border-color 0.2s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#0066FF')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)')}
+              className="inline-flex items-center gap-1.5 mt-4 text-[13px] text-[#616161] no-underline bg-white border border-black/10 rounded-lg px-3 py-1.5 transition-colors duration-200 hover:border-[#0066FF]"
             >
               <Github size={14} />
               ★ GitHub
@@ -109,14 +95,7 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      style={{
-                        fontSize: '14px',
-                        color: '#8e8e93',
-                        textDecoration: 'none',
-                        transition: 'color 0.15s ease',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.color = '#171717')}
-                      onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}
+                      className="text-sm text-[#8e8e93] no-underline transition-colors duration-150 hover:text-[#171717]"
                     >
                       {link.label}
                     </Link>

@@ -50,7 +50,11 @@ async def register(
         refresh_token=refresh,
         user=UserPublic.model_validate(user),
         pending_verification=True,
-        dev_code=code if not settings.smtp_user else None,
+        dev_code=(
+            code
+            if not settings.smtp_user and settings.environment.lower() != "production"
+            else None
+        ),
     )
 
 

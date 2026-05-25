@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Github } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/#features", label: "Возможности" },
@@ -45,7 +45,7 @@ export function PublicHeader() {
           className="flex items-center gap-1.5"
           style={{ textDecoration: 'none' }}
         >
-          <img src="/logo.png" alt="logo" style={{ height: '32px', width: '32px', borderRadius: '8px' }} />
+          <Image src="/logo.png" alt="logo" width={32} height={32} style={{ borderRadius: '8px' }} priority />
           <span
             style={{
               fontFamily: 'Geist, sans-serif',
@@ -65,16 +65,7 @@ export function PublicHeader() {
             <Link
               key={href}
               href={href}
-              style={{
-                fontSize: '14px',
-                color: '#616161',
-                textDecoration: 'none',
-                fontWeight: 450,
-                letterSpacing: '-0.01em',
-                transition: 'color 0.15s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#171717')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#616161')}
+              className="text-sm text-[#616161] no-underline font-normal tracking-tight transition-colors duration-150 hover:text-[#171717]"
             >
               {label}
             </Link>
@@ -83,17 +74,7 @@ export function PublicHeader() {
             href="https://github.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5"
-            style={{
-              fontSize: '14px',
-              color: '#616161',
-              textDecoration: 'none',
-              fontWeight: 450,
-              letterSpacing: '-0.01em',
-              transition: 'color 0.15s ease',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#171717')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#616161')}
+            className="flex items-center gap-1.5 text-sm text-[#616161] no-underline font-normal tracking-tight transition-colors duration-150 hover:text-[#171717]"
           >
             <Github size={15} />
             GitHub
@@ -102,56 +83,18 @@ export function PublicHeader() {
 
         {/* CTA buttons */}
         <div className="flex items-center gap-2">
-          <Link href="/login" style={{ textDecoration: 'none' }}>
+          <Link href="/login" className="no-underline">
             <button
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#616161',
-                fontSize: '14px',
-                fontWeight: 500,
-                padding: '0 12px',
-                height: '36px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'color 0.15s ease, background 0.15s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color = '#171717';
-                e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = '#616161';
-                e.currentTarget.style.background = 'transparent';
-              }}
+              type="button"
+              className="bg-transparent border-none text-[#616161] text-sm font-medium px-3 h-9 rounded-lg cursor-pointer transition-colors duration-150 hover:text-[#171717] hover:bg-black/[0.04]"
             >
               Войти
             </button>
           </Link>
-          <Link href="/register" style={{ textDecoration: 'none' }}>
+          <Link href="/register" className="no-underline">
             <button
-              style={{
-                background: '#0066FF',
-                border: 'none',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 600,
-                padding: '0 16px',
-                height: '36px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                letterSpacing: '-0.01em',
-                transition: 'background 0.2s ease, transform 0.15s ease',
-                boxShadow: '0 2px 8px rgba(0,102,255,0.25)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = '#0052CC';
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = '#0066FF';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              type="button"
+              className="bg-[#0066FF] border-none text-white text-sm font-semibold px-4 h-9 rounded-lg cursor-pointer tracking-tight shadow-[0_2px_8px_rgba(0,102,255,0.25)] transition-all duration-200 hover:bg-[#0052CC] hover:scale-[1.02]"
             >
               Начать бесплатно
             </button>

@@ -9,8 +9,13 @@ from __future__ import annotations
 from decimal import Decimal
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Дефолтные значения, которые НЕ должны попасть в production —
+# проверка выполняется в Settings.validate_production_defaults().
+_INSECURE_SECRET_KEY = "change-me-in-production-this-must-be-at-least-32-chars"
+_INSECURE_ADMIN_PASSWORD = "change_in_production"
 
 
 class Settings(BaseSettings):
@@ -30,16 +35,14 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="")
 
     # === JWT ===
-    secret_key: str = Field(
-        default="change-me-in-production-this-must-be-at-least-32-chars"
-    )
+    secret_key: str = Field(default=_INSECURE_SECRET_KEY)
     algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=30)
     refresh_token_expire_days: int = Field(default=30)
 
     # === Admin ===
     admin_email: str = Field(default="admin@example.com")
-    admin_password: str = Field(default="change_in_production")
+    admin_password: str = Field(default=_INSECURE_ADMIN_PASSWORD)
 
     # === SMTP ===
     smtp_host: str = Field(default="smtp.gmail.com")
@@ -86,6 +89,26 @@ class Settings(BaseSettings):
     plan_pro_features: str = Field(
         default="Безлимит запросов,Приоритетная поддержка,API доступ,Расширенная аналитика"
     )
+
+    @model_validator(mode="after")
+    def validate_production_defaults(self) -> "Settings":
+        """В production запрещаем небезопасные дефолты и короткий secret_key."""
+        if self.environment.lower() != "production":
+            return self
+
+        errors: list[str] = []
+        if self.secret_key == _INSECURE_SECRET_KEY:
+            errors.append("SECRET_KEY must be overridden in production")
+        if len(self.secret_key) < 32:
+            errors.append("SECRET_KEY must be at least 32 characters")
+        if self.admin_password == _INSECURE_ADMIN_PASSWORD:
+            errors.append("ADMIN_PASSWORD must be overridden in production")
+        if "*" in self.cors_origins:
+            errors.append("CORS_ORIGINS must not contain '*' in production")
+
+        if errors:
+            raise ValueError("Insecure production configuration: " + "; ".join(errors))
+        return self
 
     @property
     def cors_origins_list(self) -> list[str]:
