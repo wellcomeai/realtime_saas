@@ -33,7 +33,7 @@ COPY --from=frontend-builder /app/public ./public
 COPY nginx-single.conf /etc/nginx/sites-available/default
 COPY supervisord.conf /etc/supervisor/conf.d/app.conf
 COPY start.sh /start.sh
-RUN chmod +x /start.sh \
+RUN sed -i 's/\r//' /start.sh && chmod +x /start.sh \
     && rm -f /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
