@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Github, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
-import { CountUp } from "@/components/ui/count-up";
 
 const itemVariants = {
   hidden:  { opacity: 0, y: 24 },
@@ -13,12 +12,6 @@ const itemVariants = {
     transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number], delay },
   }),
 };
-
-const stats = [
-  { value: 8,  suffix: '',  label: 'модулей' },
-  { value: 10, suffix: '',  label: 'миграций' },
-  { value: 40, suffix: '+', label: 'страниц' },
-];
 
 export function Hero() {
   return (
@@ -77,28 +70,27 @@ export function Hero() {
 
         {/* Headline */}
         <motion.h1
-          custom={0.1}
+          custom={0}
           variants={itemVariants}
           initial="hidden"
           animate="visible"
           style={{
-            fontSize: 'clamp(3.5rem, 9vw, 7.5rem)',
-            lineHeight: '0.95',
+            fontSize: 'clamp(3rem, 7vw, 6rem)',
+            lineHeight: '1',
             letterSpacing: '-0.04em',
             fontWeight: 800,
             color: '#171717',
             marginBottom: '24px',
           }}
         >
-          Запусти свой SaaS
+          Готовый шаблон
           <br />
-          <span className="gradient-text">за дни</span>
-          {', не за месяцы'}
+          <span className="gradient-text">под ваш SaaS проект</span>
         </motion.h1>
 
         {/* Subheadline */}
         <motion.p
-          custom={0.2}
+          custom={0.15}
           variants={itemVariants}
           initial="hidden"
           animate="visible"
@@ -106,13 +98,12 @@ export function Hero() {
           style={{
             fontSize: '18px',
             color: '#616161',
-            maxWidth: '560px',
+            maxWidth: '620px',
             lineHeight: '1.6',
             marginBottom: '40px',
           }}
         >
-          FastAPI + Next.js. Аутентификация, биллинг, реферальная программа,
-          API‑ключи и партнёрская система — из коробки. Бери и делай своё.
+          Форкни репозиторий, заполни .env, запускай. Всё остальное уже написано за тебя.
         </motion.p>
 
         {/* CTA buttons */}
@@ -122,7 +113,7 @@ export function Hero() {
           initial="hidden"
           animate="visible"
           className="flex flex-wrap items-center justify-center gap-3"
-          style={{ marginBottom: '48px' }}
+          style={{ marginBottom: '64px' }}
         >
           <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="btn-primary-new">
             <Github size={18} />
@@ -132,40 +123,6 @@ export function Hero() {
             <ExternalLink size={16} />
             Смотреть демо
           </Link>
-        </motion.div>
-
-        {/* Stats row */}
-        <motion.div
-          custom={0.4}
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex items-center justify-center gap-8 flex-wrap"
-          style={{ marginBottom: '64px' }}
-        >
-          {stats.map((stat, i) => (
-            <div key={stat.label} className="flex items-center gap-8">
-              <div className="text-center">
-                <div
-                  style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: '#171717',
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                  }}
-                >
-                  <CountUp end={stat.value} suffix={stat.suffix} duration={1200} />
-                </div>
-                <div style={{ fontSize: '13px', color: '#8e8e93', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </div>
-              {i < stats.length - 1 && (
-                <span style={{ color: '#d1d1d6', fontSize: '20px', userSelect: 'none' }}>·</span>
-              )}
-            </div>
-          ))}
         </motion.div>
 
         {/* Dashboard preview */}

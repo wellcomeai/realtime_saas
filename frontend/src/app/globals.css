@@ -293,11 +293,57 @@
 }
 
 /* Animation utilities */
-.animate-fade-up   { animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-fade-in   { animation: fade-in 0.5s ease both; }
-.animate-float     { animation: float 6s ease-in-out infinite; }
-.animate-marquee   { animation: marquee 20s linear infinite; }
-.animate-blink     { animation: blink 1s step-end infinite; }
+.animate-fade-up      { animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in      { animation: fade-in 0.5s ease both; }
+.animate-float        { animation: float 6s ease-in-out infinite; }
+.animate-float-gentle { animation: float-gentle 6s ease-in-out infinite; }
+.animate-marquee      { animation: marquee 20s linear infinite; }
+.animate-blink        { animation: blink 1s step-end infinite; }
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+}
+.tooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #171717;
+  color: white;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+.tooltip:hover::after {
+  opacity: 1;
+}
+
+/* Type-in line animation for code blocks */
+@keyframes type-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.type-line {
+  opacity: 0;
+  animation: type-in 0.25s ease forwards;
+}
+
+/* Draw line animation */
+@keyframes draw-line {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.draw-line {
+  transform-origin: left center;
+  animation: draw-line 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 /* Stagger delays */
 .stagger-1 { animation-delay: 0.1s; }

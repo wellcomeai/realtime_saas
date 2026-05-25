@@ -2,13 +2,6 @@
 
 import { Github } from 'lucide-react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { CountUp } from '@/components/ui/count-up';
-
-const stats = [
-  { value: 8,  suffix: '',  label: 'модулей' },
-  { value: 10, suffix: '',  label: 'миграций' },
-  { value: 40, suffix: '+', label: 'страниц' },
-];
 
 export function ManifestoSection() {
   const sectionRef = useScrollReveal();
@@ -55,51 +48,14 @@ export function ManifestoSection() {
         <p
           style={{
             fontSize: '18px',
-            color: '#8e8e93',
+            color: '#c0c0c8',
             lineHeight: '1.7',
-            marginBottom: '72px',
             maxWidth: '600px',
-            margin: '0 auto 72px',
+            margin: '0 auto 56px',
           }}
         >
           OpenSaaS — это не очередной boilerplate с устаревшим кодом. Это живой шаблон с продуманной архитектурой, который мы используем сами. MIT-лицензия. Никаких скрытых платежей. Форкай, дорабатывай, запускай.
         </p>
-
-        {/* Stats */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '48px',
-            marginBottom: '64px',
-            flexWrap: 'wrap',
-          }}
-        >
-          {stats.map((stat, i) => (
-            <div key={stat.label} style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div
-                  style={{
-                    fontSize: '56px',
-                    fontWeight: 800,
-                    color: 'white',
-                    lineHeight: 1,
-                    letterSpacing: '-0.03em',
-                  }}
-                >
-                  <CountUp end={stat.value} suffix={stat.suffix} duration={1500} />
-                </div>
-                <div style={{ fontSize: '14px', color: '#8e8e93', marginTop: '8px' }}>
-                  {stat.label}
-                </div>
-              </div>
-              {i < stats.length - 1 && (
-                <span style={{ color: '#3a3a3e', fontSize: '24px' }}>·</span>
-              )}
-            </div>
-          ))}
-        </div>
 
         {/* GitHub button */}
         <a

@@ -30,7 +30,7 @@ function CodeBlock({ code }: CodeBlockProps) {
         style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          padding: '8px 12px',
+          padding: '6px 10px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
@@ -57,12 +57,13 @@ function CodeBlock({ code }: CodeBlockProps) {
       <pre
         style={{
           margin: 0,
-          padding: '20px 24px',
+          padding: '16px 18px',
           fontFamily: 'Geist Mono, Fira Code, monospace',
-          fontSize: '13px',
+          fontSize: '12.5px',
           color: '#e5e5e5',
-          lineHeight: '1.8',
+          lineHeight: '1.7',
           overflowX: 'auto',
+          minHeight: '120px',
         }}
       >
         <code>{code}</code>
@@ -71,23 +72,26 @@ function CodeBlock({ code }: CodeBlockProps) {
   );
 }
 
-const step1Code = `git clone https://github.com/your/opensaas
-cd opensaas && cp .env.example .env`;
-
-const step2Code = `docker-compose up -d
-cd backend && alembic upgrade head
-python scripts/create_admin.py`;
-
-const deployBadges = [
-  { name: 'Render', color: '#46E3B7', bg: '#0a0a0a' },
-  { name: 'Vercel', color: '#ffffff', bg: '#000000' },
-  { name: 'Docker', color: '#2496ED', bg: '#f5f5f7' },
-];
-
-const extras = [
-  'alembic upgrade head — при старте автоматически',
-  'Создание админа — идемпотентно',
-  'Redis опционален — PostgreSQL fallback работает из коробки',
+const steps = [
+  {
+    num: '1',
+    title: 'Клонировать',
+    code: `git clone https://github.com/your/opensaas
+cp .env.example .env`,
+  },
+  {
+    num: '2',
+    title: 'Запустить',
+    code: `docker-compose up -d
+alembic upgrade head
+python create_admin.py`,
+  },
+  {
+    num: '3',
+    title: 'Деплоить',
+    code: `# Render / Vercel / Docker
+# — на выбор`,
+  },
 ];
 
 export function HowToStartSection() {
@@ -105,7 +109,7 @@ export function HowToStartSection() {
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center" style={{ marginBottom: '72px' }}>
           <div
             style={{
               fontSize: '12px',
@@ -131,115 +135,138 @@ export function HowToStartSection() {
           </h2>
         </div>
 
-        {/* Steps */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', maxWidth: '720px', margin: '0 auto 64px' }}>
-          {/* Step 1 */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div
-                className="gradient-text"
-                style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1 }}
-              >
-                1
-              </div>
-              <div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: '#171717', letterSpacing: '-0.01em' }}>
-                  Клонировать
-                </div>
-                <div style={{ fontSize: '14px', color: '#616161' }}>Скачай и настрой окружение</div>
-              </div>
-            </div>
-            <CodeBlock code={step1Code} />
+        {/* Timeline */}
+        <div className="hts-timeline">
+          {/* Horizontal line (desktop only) */}
+          <div className="hts-line-track" aria-hidden="true">
+            <div className="hts-line-fill" />
           </div>
 
-          {/* Step 2 */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div
-                className="gradient-text"
-                style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1 }}
-              >
-                2
-              </div>
-              <div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: '#171717', letterSpacing: '-0.01em' }}>
-                  Запустить
-                </div>
-                <div style={{ fontSize: '14px', color: '#616161' }}>Docker, миграции, первый админ</div>
-              </div>
-            </div>
-            <CodeBlock code={step2Code} />
-          </div>
+          <div className="hts-grid">
+            {steps.map((step, i) => (
+              <div key={step.num} className="hts-step" style={{ animationDelay: `${i * 0.15}s` }}>
+                {/* Connector dot */}
+                <div className="hts-dot" />
 
-          {/* Step 3 */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div
-                className="gradient-text"
-                style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1 }}
-              >
-                3
-              </div>
-              <div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: '#171717', letterSpacing: '-0.01em' }}>
-                  Деплоить
+                <div className="hts-card">
+                  <div className="hts-num gradient-text">{step.num}</div>
+                  <div className="hts-title">{step.title}</div>
+                  <CodeBlock code={step.code} />
                 </div>
-                <div style={{ fontSize: '14px', color: '#616161' }}>Поддержка Render + Vercel из коробки</div>
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {deployBadges.map(badge => (
-                <div
-                  key={badge.name}
-                  style={{
-                    background: badge.bg,
-                    color: badge.color,
-                    borderRadius: '10px',
-                    padding: '10px 20px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    border: badge.bg === '#f5f5f7' ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                  }}
-                >
-                  {badge.name}
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize: '14px', color: '#8e8e93', marginTop: '12px' }}>
-              Документация для каждого варианта деплоя в репозитории.
-            </p>
+            ))}
           </div>
-        </div>
-
-        {/* Extras */}
-        <div
-          style={{
-            maxWidth: '720px',
-            margin: '0 auto',
-            background: '#f5f5f7',
-            borderRadius: '16px',
-            padding: '24px 28px',
-          }}
-        >
-          {extras.map((item) => (
-            <div
-              key={item}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '10px 0',
-                borderBottom: '1px solid rgba(0,0,0,0.06)',
-                fontSize: '14px',
-                color: '#616161',
-              }}
-            >
-              <span style={{ color: '#0066FF', fontWeight: 700, flexShrink: 0 }}>✓</span>
-              {item}
-            </div>
-          ))}
         </div>
       </div>
+
+      <style jsx>{`
+        .hts-timeline {
+          position: relative;
+        }
+        .hts-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 32px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .hts-step {
+          position: relative;
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        :global(.reveal.visible) .hts-step {
+          animation: hts-step-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes hts-step-in {
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hts-dot {
+          display: none;
+        }
+
+        .hts-card {
+          background: white;
+          border: 1px solid rgba(0, 0, 0, 0.07);
+          border-radius: 16px;
+          padding: 24px;
+          transition: all 0.2s ease;
+        }
+        .hts-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(0, 102, 255, 0.25);
+          box-shadow: 0 8px 32px rgba(0, 102, 255, 0.1);
+        }
+
+        .hts-num {
+          font-size: 48px;
+          font-weight: 800;
+          line-height: 1;
+          margin-bottom: 12px;
+        }
+        .hts-title {
+          font-size: 18px;
+          font-weight: 700;
+          color: #171717;
+          letter-spacing: -0.01em;
+          margin-bottom: 16px;
+        }
+
+        .hts-line-track {
+          display: none;
+        }
+
+        @media (min-width: 768px) {
+          .hts-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+          }
+          .hts-line-track {
+            display: block;
+            position: absolute;
+            top: 28px;
+            left: 12%;
+            right: 12%;
+            height: 2px;
+            background: rgba(0, 102, 255, 0.12);
+            border-radius: 2px;
+            overflow: hidden;
+            z-index: 0;
+          }
+          .hts-line-fill {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #0066FF, #6366f1);
+            transform: scaleX(0);
+            transform-origin: left center;
+          }
+          :global(.reveal.visible) .hts-line-fill {
+            animation: hts-line-grow 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+          }
+          @keyframes hts-line-grow {
+            to { transform: scaleX(1); }
+          }
+          .hts-dot {
+            display: block;
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #0066FF;
+            box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+            z-index: 2;
+          }
+          .hts-card {
+            margin-top: 56px;
+          }
+        }
+      `}</style>
     </section>
   );
 }

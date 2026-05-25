@@ -2,51 +2,13 @@
 
 import { useState } from 'react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, User, Users } from 'lucide-react';
 
-const steps = [
-  {
-    num: '1',
-    title: 'Поделись ссылкой',
-    desc: 'Получи уникальную реферальную ссылку в личном кабинете и отправь другу.',
-  },
-  {
-    num: '2',
-    title: 'Друг регистрируется',
-    desc: 'Новый пользователь регистрируется по твоей ссылке или с твоим промокодом.',
-  },
-  {
-    num: '3',
-    title: 'Получаешь 20%',
-    desc: 'С каждого платежа приглашённого — 20% приходит тебе. Автоматически.',
-  },
+const features = [
+  'Уникальные реферальные ссылки для каждого пользователя',
+  'Статистика в личном кабинете',
+  'Выплаты через админ-панель',
 ];
-
-function StepCard({ step }: { step: (typeof steps)[number] }) {
-  return (
-    <div
-      style={{
-        background: 'white',
-        border: '1px solid rgba(0,0,0,0.07)',
-        borderRadius: '16px',
-        padding: '24px',
-      }}
-    >
-      <div
-        className="gradient-text"
-        style={{ fontSize: '36px', fontWeight: 800, lineHeight: 1, marginBottom: '12px', display: 'block' }}
-      >
-        {step.num}
-      </div>
-      <div style={{ fontSize: '15px', fontWeight: 700, color: '#171717', marginBottom: '8px', letterSpacing: '-0.01em' }}>
-        {step.title}
-      </div>
-      <p style={{ fontSize: '13px', color: '#616161', lineHeight: '1.6', margin: 0 }}>
-        {step.desc}
-      </p>
-    </div>
-  );
-}
 
 export function ReferralSection() {
   const sectionRef = useScrollReveal();
@@ -67,7 +29,7 @@ export function ReferralSection() {
         padding: '120px 0',
       }}
     >
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
         <div
           style={{
             fontSize: '12px',
@@ -78,7 +40,7 @@ export function ReferralSection() {
             marginBottom: '16px',
           }}
         >
-          04 / ПАРТНЁРСКАЯ ПРОГРАММА
+          03 / РЕФЕРАЛЫ
         </div>
 
         <h2
@@ -91,23 +53,74 @@ export function ReferralSection() {
             marginBottom: '16px',
           }}
         >
-          Встроенная партнёрская программа
+          Встроенная реферальная программа
         </h2>
 
-        <p style={{ fontSize: '18px', color: '#616161', lineHeight: '1.6', marginBottom: '64px' }}>
-          20% с каждого платежа приглашённого пользователя. Коды, ссылки, история выплат — всё готово.
+        <p style={{ fontSize: '18px', color: '#616161', lineHeight: '1.6', marginBottom: '72px' }}>
+          20% с каждого платежа приглашённого — автоматически
         </p>
 
-        {/* Steps grid */}
+        {/* Flow diagram */}
         <div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left mb-12"
+          className="ref-flow"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+            marginBottom: '64px',
+          }}
         >
-          {steps.map((step) => (
-            <StepCard key={step.num} step={step} />
-          ))}
+          <FlowBlock icon={<User size={24} />} label="ВЫ" delay={0} />
+          <FlowArrow delay={0.2} />
+          <FlowBlock icon={<Users size={24} />} label="ДРУГ" delay={0.2} />
+          <FlowArrow delay={0.4} />
+          <FlowBlock label="+20%" delay={0.4} accent />
         </div>
 
-        {/* Referral link */}
+        {/* Feature list */}
+        <ul
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: '0 auto 48px',
+            maxWidth: '480px',
+            textAlign: 'left',
+          }}
+        >
+          {features.map((f) => (
+            <li
+              key={f}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 0',
+                fontSize: '15px',
+                color: '#3a3a3e',
+              }}
+            >
+              <span
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: 'rgba(0,102,255,0.1)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Check size={12} color="#0066FF" strokeWidth={3} />
+              </span>
+              {f}
+            </li>
+          ))}
+        </ul>
+
+        {/* Referral link mockup */}
         <div
           style={{
             border: '1.5px solid rgba(0,102,255,0.2)',
@@ -119,6 +132,8 @@ export function ReferralSection() {
             justifyContent: 'space-between',
             gap: '16px',
             flexWrap: 'wrap',
+            maxWidth: '560px',
+            margin: '0 auto',
           }}
         >
           <span
@@ -154,6 +169,96 @@ export function ReferralSection() {
           </button>
         </div>
       </div>
+
+      <style jsx global>{`
+        .ref-block {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        .reveal.visible .ref-block {
+          animation: ref-block-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .ref-arrow-line {
+          transform-origin: left center;
+          transform: scaleX(0);
+        }
+        .reveal.visible .ref-arrow-line {
+          animation: draw-line 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes ref-block-in {
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </section>
+  );
+}
+
+function FlowBlock({
+  icon,
+  label,
+  delay,
+  accent,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  delay: number;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className="ref-block"
+      style={{
+        background: accent ? '#0066FF' : 'white',
+        color: accent ? 'white' : '#171717',
+        border: accent ? 'none' : '1px solid rgba(0,0,0,0.08)',
+        borderRadius: '16px',
+        padding: '20px 24px',
+        minWidth: '120px',
+        boxShadow: accent ? '0 10px 30px rgba(0,102,255,0.3)' : '0 4px 14px rgba(0,0,0,0.04)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
+        animationDelay: `${delay}s`,
+      }}
+    >
+      {icon && (
+        <span style={{ color: accent ? 'white' : '#0066FF', display: 'inline-flex' }}>{icon}</span>
+      )}
+      <span
+        style={{
+          fontSize: accent ? '20px' : '14px',
+          fontWeight: 700,
+          letterSpacing: accent ? '-0.02em' : '0.05em',
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function FlowArrow({ delay }: { delay: number }) {
+  return (
+    <div
+      className="ref-arrow"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '48px',
+        height: '2px',
+        transitionDelay: `${delay}s`,
+      }}
+    >
+      <div
+        className="ref-arrow-line"
+        style={{
+          width: '100%',
+          height: '2px',
+          background: 'linear-gradient(90deg, rgba(0,102,255,0.4), rgba(0,102,255,0.8))',
+          animationDelay: `${delay}s`,
+        }}
+      />
+    </div>
   );
 }

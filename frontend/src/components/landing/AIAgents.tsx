@@ -30,7 +30,7 @@ export function AIAgentsSection() {
                 marginBottom: '16px',
               }}
             >
-              03 / AI-АГЕНТЫ
+              04 / AI-АГЕНТЫ
             </div>
             <h2
               style={{
@@ -71,11 +71,20 @@ export function AIAgentsSection() {
           </div>
 
           {/* Right column — terminal */}
-          <div>
+          <div className="ai-terminal-wrap">
             <TerminalMockup />
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .ai-terminal-wrap > :global(div) {
+          transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        .ai-terminal-wrap:hover > :global(div) {
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15), 0 0 40px rgba(52, 211, 153, 0.1);
+        }
+      `}</style>
     </section>
   );
 }
