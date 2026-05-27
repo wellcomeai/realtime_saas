@@ -1,6 +1,7 @@
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/landing/Hero";
+import { LiveDemo } from "@/components/landing/LiveDemo";
 import { WhatYouGet } from "@/components/landing/WhatYouGet";
 import { WhatCanCreate } from "@/components/landing/WhatCanCreate";
 import { WhatInside } from "@/components/landing/WhatInside";
@@ -15,6 +16,7 @@ export default function LandingPage() {
       <PublicHeader />
       <main>
         <Hero />
+        <LiveDemo />
         <WhatYouGet />
         <WhatCanCreate />
         <WhatInside />

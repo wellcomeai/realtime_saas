@@ -25,12 +25,44 @@ export function WhatYouGet() {
     <section
       id="what-you-get"
       style={{
+        position: "relative",
+        overflow: "hidden",
         background: "#ffffff",
         padding: "120px 0",
         marginTop: "-1px",
       }}
     >
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: "-100px",
+          right: "-120px",
+          width: "400px",
+          height: "400px",
+          borderRadius: "50%",
+          background: "rgba(0,102,255,0.05)",
+          filter: "blur(60px)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          bottom: "-80px",
+          left: "-100px",
+          width: "320px",
+          height: "320px",
+          borderRadius: "50%",
+          background: "rgba(139,92,246,0.04)",
+          filter: "blur(50px)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1, maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         {/* Header */}
         <div className="text-center" style={{ marginBottom: "56px" }}>
           <div

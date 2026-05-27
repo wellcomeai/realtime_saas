@@ -1,36 +1,30 @@
 "use client";
 
-import { Shield, CreditCard, LayoutDashboard, Gift } from "lucide-react";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { UserPlus, LayoutDashboard, Sparkles } from "lucide-react";
 
 const cards = [
   {
-    Icon: Shield,
+    Icon: UserPlus,
     color: "#0066FF",
     bg: "rgba(0,102,255,0.08)",
-    title: "Регистрация пользователей",
-    text: "Вход, выход, восстановление пароля и подтверждение email — работает из коробки",
-  },
-  {
-    Icon: CreditCard,
-    color: "#10b981",
-    bg: "rgba(16,185,129,0.08)",
-    title: "Приём платежей",
-    text: "Подключи оплату за 5 минут — просто вставь ключи. История транзакций в админке",
+    title: "Зарегистрируйся",
+    text: "Та же форма что получишь ты",
   },
   {
     Icon: LayoutDashboard,
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.08)",
-    title: "Личный кабинет",
-    text: "Каждый пользователь видит свои данные, подписку и историю платежей",
+    color: "#10b981",
+    bg: "rgba(16,185,129,0.08)",
+    title: "Загляни в кабинет",
+    text: "Подписки, рефералы, настройки",
   },
   {
-    Icon: Gift,
+    Icon: Sparkles,
     color: "#8b5cf6",
     bg: "rgba(139,92,246,0.1)",
-    title: "Партнёрская программа",
-    text: "Пользователи приглашают друзей — платформа растёт сама",
+    title: "Исследуй сам",
+    text: "Всё что видишь — твоё после покупки",
   },
 ];
 
@@ -50,40 +44,26 @@ const itemVariants = {
   },
 };
 
-export function WhatInside() {
+export function LiveDemo() {
   return (
-    <section style={{ position: "relative", overflow: "hidden", background: "#ffffff", padding: "120px 0" }}>
+    <section
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        background:
+          "radial-gradient(ellipse 70% 50% at 15% 50%, rgba(0,102,255,0.06) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 85% 30%, rgba(139,92,246,0.05) 0%, transparent 60%), #ffffff",
+        padding: "120px 0",
+      }}
+    >
       <div
-        aria-hidden="true"
         style={{
-          position: "absolute",
-          top: "-100px",
-          left: "-120px",
-          width: "380px",
-          height: "380px",
-          borderRadius: "50%",
-          background: "rgba(16,185,129,0.05)",
-          filter: "blur(60px)",
-          pointerEvents: "none",
-          zIndex: 0,
+          position: "relative",
+          zIndex: 1,
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "0 24px",
         }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          bottom: "-120px",
-          right: "-140px",
-          width: "420px",
-          height: "420px",
-          borderRadius: "50%",
-          background: "rgba(0,102,255,0.05)",
-          filter: "blur(65px)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-      <div style={{ position: "relative", zIndex: 1, maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
+      >
         <div className="text-center" style={{ marginBottom: "64px" }}>
           <div
             style={{
@@ -95,7 +75,7 @@ export function WhatInside() {
               marginBottom: "16px",
             }}
           >
-            03 / ВОЗМОЖНОСТИ
+            ЖИВОЕ ДЕМО
           </div>
           <h2
             style={{
@@ -104,26 +84,29 @@ export function WhatInside() {
               letterSpacing: "-0.025em",
               lineHeight: "1.05",
               color: "#171717",
-              marginBottom: "16px",
+              marginBottom: "20px",
             }}
           >
-            Всё уже написано за вас
+            «Этот сайт — и есть шаблон»
           </h2>
           <p
             style={{
               fontSize: "18px",
               color: "#616161",
               lineHeight: "1.6",
-              maxWidth: "600px",
+              maxWidth: "640px",
               margin: "0 auto",
             }}
           >
-            Не тратьте месяцы на инфраструктуру — сосредоточьтесь на своей идее
+            То что вы видите прямо сейчас — не презентация и не макет. Это реально работающая
+            платформа, собранная на том самом шаблоне. После покупки у вас будет один в один
+            такая же — со своим брендом, своими пользователями и своими подписками.
           </p>
         </div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-5"
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
+          style={{ marginBottom: "48px" }}
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -150,7 +133,6 @@ export function WhatInside() {
               >
                 <card.Icon size={24} color={card.color} strokeWidth={1.75} />
               </div>
-
               <h3
                 style={{
                   fontSize: "20px",
@@ -175,7 +157,26 @@ export function WhatInside() {
             </motion.div>
           ))}
         </motion.div>
+
+        <div style={{ textAlign: "center" }}>
+          <Link href="#what-you-get" className="btn-secondary-new live-demo-cta">
+            Узнать подробнее
+          </Link>
+        </div>
       </div>
+
+      <style jsx>{`
+        :global(.live-demo-cta) {
+          transition: transform 200ms ease, box-shadow 200ms ease,
+            border-color 200ms ease, background 200ms ease;
+        }
+        :global(.live-demo-cta:hover) {
+          transform: translateY(-1px);
+          border-color: #0066ff;
+          box-shadow: 0 8px 24px rgba(0, 102, 255, 0.18),
+            0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+      `}</style>
     </section>
   );
 }

@@ -29,12 +29,30 @@ export function HowToStartSection() {
       ref={sectionRef as React.RefObject<HTMLElement>}
       className="reveal"
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         background:
           'linear-gradient(180deg, #ffffff 0%, #f5f5f7 12%, #f5f5f7 88%, #ffffff 100%)',
         padding: '120px 0',
       }}
     >
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'rgba(99,102,241,0.06)',
+          filter: 'blur(80px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
         {/* Header */}
         <div className="text-center" style={{ marginBottom: '72px' }}>
           <div

@@ -54,12 +54,30 @@ export function WhatCanCreate() {
   return (
     <section
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         background:
           'linear-gradient(180deg, #ffffff 0%, #f5f5f7 12%, #f5f5f7 88%, #ffffff 100%)',
         padding: '120px 0',
       }}
     >
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '-150px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'rgba(0,102,255,0.06)',
+          filter: 'blur(70px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1, maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         <div className="text-center" style={{ marginBottom: "64px" }}>
           <div
             style={{

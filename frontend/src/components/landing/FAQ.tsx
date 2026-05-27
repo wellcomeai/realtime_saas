@@ -37,11 +37,28 @@ export function FAQ() {
     <section
       id="faq"
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         background: 'white',
         padding: '120px 0',
       }}
     >
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 24px' }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '-100px',
+          right: '-120px',
+          width: '350px',
+          height: '350px',
+          borderRadius: '50%',
+          background: 'rgba(139,92,246,0.05)',
+          filter: 'blur(60px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '760px', margin: '0 auto', padding: '0 24px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
           <h2

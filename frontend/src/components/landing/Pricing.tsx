@@ -73,8 +73,39 @@ export function Pricing() {
       : fallback;
 
   return (
-    <section id="pricing" style={{ padding: '120px 0', background: '#f5f5f7' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px' }}>
+    <section id="pricing" style={{ position: 'relative', overflow: 'hidden', padding: '120px 0', background: '#f5f5f7' }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '-150px',
+          transform: 'translateY(-50%)',
+          width: '450px',
+          height: '450px',
+          borderRadius: '50%',
+          background: 'rgba(0,102,255,0.07)',
+          filter: 'blur(70px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          bottom: '-100px',
+          right: '-80px',
+          width: '300px',
+          height: '300px',
+          borderRadius: '50%',
+          background: 'rgba(245,158,11,0.04)',
+          filter: 'blur(50px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto', padding: '0 24px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
           <div
