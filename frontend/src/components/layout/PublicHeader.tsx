@@ -99,18 +99,6 @@ export function PublicHeader() {
           <Link href="/register" className="no-underline">
             <button
               type="button"
-              className="text-[#171717] text-[13px] font-medium px-3 h-8 rounded-[9px] cursor-pointer transition-all duration-200 hover:border-[#0066FF] hover:text-[#0066FF] hover:bg-[rgba(0,102,255,0.06)] hover:shadow-[0_2px_10px_rgba(0,102,255,0.15)]"
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(0,0,0,0.12)',
-              }}
-            >
-              Регистрация
-            </button>
-          </Link>
-          <Link href="#" className="no-underline">
-            <button
-              type="button"
               className="text-white text-[13px] font-semibold px-3.5 h-8 rounded-[9px] cursor-pointer tracking-tight transition-all duration-200 hover:bg-[#0052CC] hover:shadow-[0_4px_14px_rgba(0,102,255,0.4)]"
               style={{
                 background: '#0066FF',
@@ -118,7 +106,7 @@ export function PublicHeader() {
                 boxShadow: '0 2px 8px rgba(0,102,255,0.3)',
               }}
             >
-              Купить за 3000₽
+              Регистрация
             </button>
           </Link>
         </div>
