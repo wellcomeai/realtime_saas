@@ -1,36 +1,36 @@
 "use client";
 
-import { Shield, CreditCard, LayoutDashboard, Gift } from "lucide-react";
 import { motion } from "framer-motion";
+import { Repeat, ShoppingBag, Wrench, GraduationCap } from "lucide-react";
 
 const cards = [
   {
-    Icon: Shield,
+    Icon: Repeat,
     color: "#0066FF",
     bg: "rgba(0,102,255,0.08)",
-    title: "Регистрация пользователей",
-    text: "Вход, выход, восстановление пароля и подтверждение email — работает из коробки",
+    title: "Сервис подписок",
+    text: "Продавай доступ к контенту или инструменту по подписке",
   },
   {
-    Icon: CreditCard,
+    Icon: ShoppingBag,
     color: "#10b981",
     bg: "rgba(16,185,129,0.08)",
-    title: "Приём платежей",
-    text: "Подключи оплату за 5 минут — просто вставь ключи. История транзакций в админке",
+    title: "Маркетплейс",
+    text: "Площадка где продавцы и покупатели находят друг друга",
   },
   {
-    Icon: LayoutDashboard,
+    Icon: Wrench,
     color: "#f59e0b",
     bg: "rgba(245,158,11,0.08)",
-    title: "Личный кабинет",
-    text: "Каждый пользователь видит свои данные, подписку и историю платежей",
+    title: "SaaS-инструмент",
+    text: "Онлайн-сервис который решает конкретную задачу бизнеса",
   },
   {
-    Icon: Gift,
+    Icon: GraduationCap,
     color: "#8b5cf6",
     bg: "rgba(139,92,246,0.1)",
-    title: "Партнёрская программа",
-    text: "Пользователи приглашают друзей — платформа растёт сама",
+    title: "Образовательная платформа",
+    text: "Курсы, уроки, закрытый клуб с подпиской",
   },
 ];
 
@@ -50,9 +50,9 @@ const itemVariants = {
   },
 };
 
-export function WhatInside() {
+export function WhatCanCreate() {
   return (
-    <section style={{ background: "#ffffff", padding: "120px 0" }}>
+    <section style={{ background: "#f5f5f7", padding: "120px 0" }}>
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         <div className="text-center" style={{ marginBottom: "64px" }}>
           <div
@@ -65,7 +65,7 @@ export function WhatInside() {
               marginBottom: "16px",
             }}
           >
-            03 / ВОЗМОЖНОСТИ
+            02 / ЧТО МОЖНО СОЗДАТЬ
           </div>
           <h2
             style={{
@@ -74,22 +74,10 @@ export function WhatInside() {
               letterSpacing: "-0.025em",
               lineHeight: "1.05",
               color: "#171717",
-              marginBottom: "16px",
             }}
           >
-            Всё уже написано за вас
+            Какую платформу ты запустишь?
           </h2>
-          <p
-            style={{
-              fontSize: "18px",
-              color: "#616161",
-              lineHeight: "1.6",
-              maxWidth: "600px",
-              margin: "0 auto",
-            }}
-          >
-            Не тратьте месяцы на инфраструктуру — сосредоточьтесь на своей идее
-          </p>
         </div>
 
         <motion.div
@@ -120,7 +108,6 @@ export function WhatInside() {
               >
                 <card.Icon size={24} color={card.color} strokeWidth={1.75} />
               </div>
-
               <h3
                 style={{
                   fontSize: "20px",

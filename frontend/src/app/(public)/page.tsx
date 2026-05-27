@@ -1,11 +1,9 @@
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/landing/Hero";
-import { LogoStrip } from "@/components/landing/LogoStrip";
+import { WhatYouGet } from "@/components/landing/WhatYouGet";
+import { WhatCanCreate } from "@/components/landing/WhatCanCreate";
 import { WhatInside } from "@/components/landing/WhatInside";
-import { AuthSection } from "@/components/landing/AuthSection";
-import { PaymentsSection } from "@/components/landing/PaymentsSection";
-import { ReferralSection } from "@/components/landing/ReferralSection";
 import { AIAgentsSection } from "@/components/landing/AIAgents";
 import { HowToStartSection } from "@/components/landing/HowToStart";
 import { ManifestoSection } from "@/components/landing/Manifesto";
@@ -17,11 +15,9 @@ export default function LandingPage() {
       <PublicHeader />
       <main>
         <Hero />
-        <LogoStrip />
+        <WhatYouGet />
+        <WhatCanCreate />
         <WhatInside />
-        <AuthSection />
-        <PaymentsSection />
-        <ReferralSection />
         <AIAgentsSection />
         <HowToStartSection />
         <ManifestoSection />

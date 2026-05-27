@@ -30,7 +30,7 @@ export function AIAgentsSection() {
                 marginBottom: '16px',
               }}
             >
-              04 / AI-АГЕНТЫ
+              04 / AI-АССИСТЕНТ
             </div>
             <h2
               style={{
@@ -42,22 +42,16 @@ export function AIAgentsSection() {
                 marginBottom: '24px',
               }}
             >
-              Создан для работы с AI-агентами
+              Дорабатывай платформу
+              <br />
+              с помощью AI
             </h2>
-            <p style={{ fontSize: '16px', color: '#616161', lineHeight: '1.7', marginBottom: '24px' }}>
-              Каждый модуль содержит <code style={{ fontFamily: 'monospace', background: '#f5f5f7', padding: '2px 6px', borderRadius: '4px', fontSize: '14px' }}>CLAUDE.md</code> — файл с контекстом архитектуры, паттернами кода и правилами безопасности.
+            <p style={{ fontSize: '16px', color: '#616161', lineHeight: '1.7', marginBottom: '20px' }}>
+              Не нужно нанимать разработчика для каждого изменения. Опиши задачу AI-ассистенту — он поймёт структуру проекта и внесёт правки сам.
             </p>
-            <p style={{ fontSize: '16px', color: '#616161', lineHeight: '1.7', marginBottom: '32px' }}>
-              Claude Code, Cursor и другие AI-инструменты сразу понимают структуру проекта и дорабатывают его без лишних вопросов.
+            <p style={{ fontSize: '16px', color: '#616161', lineHeight: '1.7', marginBottom: 0 }}>
+              Claude Code, Cursor и другие AI-инструменты сразу понимают как устроен шаблон и дорабатывают его без лишних вопросов.
             </p>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#0066FF] text-[15px] font-medium no-underline inline-flex items-center gap-1 hover:underline"
-            >
-              Смотреть CLAUDE.md →
-            </a>
           </div>
 
           {/* Right column — terminal */}

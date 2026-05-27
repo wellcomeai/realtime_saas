@@ -1,96 +1,22 @@
 "use client";
 
-import { useState } from 'react';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { Copy, Check } from 'lucide-react';
-
-interface CodeBlockProps {
-  code: string;
-}
-
-function CodeBlock({ code }: CodeBlockProps) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div
-      style={{
-        background: '#0a0a0a',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          padding: '6px 10px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <button
-          onClick={handleCopy}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '6px',
-            padding: '4px 10px',
-            fontSize: '12px',
-            color: copied ? '#34d399' : '#8e8e93',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {copied ? <Check size={12} /> : <Copy size={12} />}
-          {copied ? 'Скопировано' : 'Копировать'}
-        </button>
-      </div>
-      <pre
-        style={{
-          margin: 0,
-          padding: '16px 18px',
-          fontFamily: 'Geist Mono, Fira Code, monospace',
-          fontSize: '12.5px',
-          color: '#e5e5e5',
-          lineHeight: '1.7',
-          overflowX: 'auto',
-          minHeight: '120px',
-        }}
-      >
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
-}
 
 const steps = [
   {
     num: '1',
-    title: 'Клонировать',
-    code: `git clone https://github.com/your/opensaas
-cp .env.example .env`,
+    title: 'Купи шаблон',
+    text: 'Оплати один раз — получи шаблон и доступ к 5 видеоурокам навсегда.',
   },
   {
     num: '2',
-    title: 'Запустить',
-    code: `docker-compose up -d
-alembic upgrade head
-python create_admin.py`,
+    title: 'Разверни по уроку',
+    text: 'Следуй видеоуроку — платформа запускается на твоём домене за один день.',
   },
   {
     num: '3',
-    title: 'Деплоить',
-    code: `# Render / Vercel / Docker
-# — на выбор`,
+    title: 'Дорабатывай с AI',
+    text: 'Описывай задачи AI-ассистенту — он вносит изменения без найма разработчика.',
   },
 ];
 
@@ -131,7 +57,7 @@ export function HowToStartSection() {
               color: '#171717',
             }}
           >
-            От нуля до рабочего SaaS за 3 шага
+            От покупки до работающей платформы — 3 шага
           </h2>
         </div>
 
@@ -151,7 +77,7 @@ export function HowToStartSection() {
                 <div className="hts-card">
                   <div className="hts-num gradient-text">{step.num}</div>
                   <div className="hts-title">{step.title}</div>
-                  <CodeBlock code={step.code} />
+                  <p className="hts-text">{step.text}</p>
                 </div>
               </div>
             ))}
@@ -191,7 +117,7 @@ export function HowToStartSection() {
           background: white;
           border: 1px solid rgba(0, 0, 0, 0.07);
           border-radius: 16px;
-          padding: 24px;
+          padding: 28px;
           transition: all 0.2s ease;
         }
         .hts-card:hover {
@@ -207,11 +133,17 @@ export function HowToStartSection() {
           margin-bottom: 12px;
         }
         .hts-title {
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 700;
           color: #171717;
           letter-spacing: -0.01em;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
+        }
+        .hts-text {
+          font-size: 15px;
+          color: #616161;
+          line-height: 1.6;
+          margin: 0;
         }
 
         .hts-line-track {

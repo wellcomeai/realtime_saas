@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Github, ExternalLink, Zap } from "lucide-react";
+import { Send, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 
 const itemVariants = {
@@ -29,6 +29,59 @@ export function Hero() {
       {/* Mesh background */}
       <div className="absolute inset-0 mesh-bg" style={{ zIndex: 0 }} />
 
+      {/* Drifting gradient orbs */}
+      <motion.div
+        aria-hidden
+        animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0,102,255,0.12) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          top: '-100px',
+          left: '10%',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+      <motion.div
+        aria-hidden
+        animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          position: 'absolute',
+          width: '460px',
+          height: '460px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
+          filter: 'blur(70px)',
+          top: '0px',
+          right: '5%',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+      <motion.div
+        aria-hidden
+        animate={{ x: [0, 20, -20, 0], y: [0, -10, 10, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          position: 'absolute',
+          width: '380px',
+          height: '380px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,179,237,0.14) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          bottom: '-80px',
+          left: '40%',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Subtle dot grid */}
       <div
         style={{
@@ -54,16 +107,12 @@ export function Hero() {
           animate="visible"
           className="flex justify-center mb-8"
         >
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 group border border-black/10 rounded-full px-4 py-1.5 text-[13px] text-[#616161] no-underline bg-white/80 backdrop-blur-md transition-all duration-200 hover:border-[#0066FF] hover:text-[#0066FF] hover:bg-white cursor-pointer"
+          <div
+            className="inline-flex items-center gap-2 border border-black/10 rounded-full px-4 py-1.5 text-[13px] text-[#616161] bg-white/80 backdrop-blur-md"
           >
             <Zap size={12} strokeWidth={2.5} />
-            <span>Open Source · MIT · GitHub</span>
-            <span style={{ fontSize: '12px', opacity: 0.6 }}>→</span>
-          </a>
+            <span>Шаблон + 5 уроков · Запуск за выходные</span>
+          </div>
         </motion.div>
 
         {/* Headline */}
@@ -81,9 +130,9 @@ export function Hero() {
             marginBottom: '24px',
           }}
         >
-          Готовый шаблон
+          Создай свою
           <br />
-          <span className="gradient-text">под ваш SaaS проект</span>
+          <span className="gradient-text">онлайн платформу</span> за выходные
         </motion.h1>
 
         {/* Subheadline */}
@@ -101,7 +150,9 @@ export function Hero() {
             marginBottom: '40px',
           }}
         >
-          Форкни репозиторий, заполни .env, запускай. Всё остальное уже написано за тебя.
+          Готовый шаблон + видеоуроки по запуску.
+          <br />
+          Без найма разработчика.
         </motion.p>
 
         {/* CTA buttons */}
@@ -113,13 +164,18 @@ export function Hero() {
           className="flex flex-wrap items-center justify-center gap-3"
           style={{ marginBottom: '64px' }}
         >
-          <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="btn-primary-new">
-            <Github size={17} />
-            Клонировать на GitHub
+          <Link href="#" className="btn-primary-new">
+            <span aria-hidden>💳</span>
+            Купить за 3000₽
           </Link>
-          <Link href="/register" className="btn-secondary-new">
-            <ExternalLink size={15} />
-            Смотреть демо
+          <Link
+            href="https://t.me/wellcome_ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary-new"
+          >
+            <Send size={15} />
+            Автор шаблона
           </Link>
         </motion.div>
 

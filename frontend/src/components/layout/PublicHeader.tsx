@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Github } from "lucide-react";
 
 const navLinks = [
-  { href: "/#features", label: "Возможности" },
-  { href: "/#ai-agents", label: "AI-агенты" },
+  { href: "/#what-you-get", label: "Что внутри" },
+  { href: "/#ai-agents", label: "AI" },
   { href: "/#how-to-start", label: "Как начать" },
 ];
 
@@ -77,15 +76,6 @@ export function PublicHeader() {
               {label}
             </Link>
           ))}
-          <Link
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-[13px] text-[#616161] no-underline font-normal tracking-tight transition-colors duration-150 hover:text-[#171717]"
-          >
-            <Github size={14} />
-            GitHub
-          </Link>
         </nav>
 
         {/* CTA buttons */}
@@ -99,7 +89,7 @@ export function PublicHeader() {
               Войти
             </button>
           </Link>
-          <Link href="/register" className="no-underline">
+          <Link href="#" className="no-underline">
             <button
               type="button"
               className="text-white text-[13px] font-semibold px-3.5 h-8 rounded-[9px] cursor-pointer tracking-tight transition-all duration-200 hover:bg-[#0052CC] hover:shadow-[0_4px_14px_rgba(0,102,255,0.4)]"
@@ -109,7 +99,7 @@ export function PublicHeader() {
                 boxShadow: '0 2px 8px rgba(0,102,255,0.3)',
               }}
             >
-              Начать бесплатно
+              Купить за 3000₽
             </button>
           </Link>
         </div>
