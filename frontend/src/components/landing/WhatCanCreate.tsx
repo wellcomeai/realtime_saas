@@ -52,7 +52,13 @@ const itemVariants = {
 
 export function WhatCanCreate() {
   return (
-    <section style={{ background: "#f5f5f7", padding: "120px 0" }}>
+    <section
+      style={{
+        background:
+          'linear-gradient(180deg, #ffffff 0%, #f5f5f7 12%, #f5f5f7 88%, #ffffff 100%)',
+        padding: '120px 0',
+      }}
+    >
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         <div className="text-center" style={{ marginBottom: "64px" }}>
           <div

@@ -12,7 +12,8 @@ export function AIAgentsSection() {
       ref={sectionRef as React.RefObject<HTMLElement>}
       className="reveal"
       style={{
-        background: 'linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%)',
+        background:
+          'linear-gradient(180deg, #ffffff 0%, #f5f5f7 12%, #f5f5f7 88%, #ffffff 100%)',
         padding: '120px 0',
       }}
     >
