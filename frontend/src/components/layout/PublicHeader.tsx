@@ -12,6 +12,7 @@ const navLinks = [
 
 export function PublicHeader() {
   const [scrolled, setScrolled] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -19,8 +20,15 @@ export function PublicHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const baseShadow = scrolled
+    ? '0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset'
+    : '0 2px 12px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.5) inset';
+  const hoverShadow = '0 14px 40px rgba(0,102,255,0.18), 0 0 0 1px rgba(0,102,255,0.18) inset';
+
   return (
     <header
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         position: 'fixed',
         top: '12px',
@@ -29,13 +37,12 @@ export function PublicHeader() {
         zIndex: 50,
         height: '52px',
         borderRadius: '14px',
-        transition: 'box-shadow 0.3s ease, background 0.3s ease',
-        background: 'rgba(255,255,255,0.88)',
+        transition: 'box-shadow 0.3s ease, background 0.3s ease, transform 0.3s ease, border-color 0.3s ease',
+        background: hovered ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.88)',
         backdropFilter: 'blur(24px) saturate(180%)',
-        border: '1px solid rgba(0,0,0,0.08)',
-        boxShadow: scrolled
-          ? '0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset'
-          : '0 2px 12px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.5) inset',
+        border: hovered ? '1px solid rgba(0,102,255,0.18)' : '1px solid rgba(0,0,0,0.08)',
+        boxShadow: hovered ? hoverShadow : baseShadow,
+        transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
       }}
     >
       <div
@@ -87,6 +94,18 @@ export function PublicHeader() {
               style={{ background: 'transparent', border: 'none' }}
             >
               Войти
+            </button>
+          </Link>
+          <Link href="/register" className="no-underline">
+            <button
+              type="button"
+              className="text-[#171717] text-[13px] font-medium px-3 h-8 rounded-[9px] cursor-pointer transition-all duration-200 hover:border-[#0066FF] hover:text-[#0066FF] hover:bg-[rgba(0,102,255,0.06)] hover:shadow-[0_2px_10px_rgba(0,102,255,0.15)]"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(0,0,0,0.12)',
+              }}
+            >
+              Регистрация
             </button>
           </Link>
           <Link href="#" className="no-underline">

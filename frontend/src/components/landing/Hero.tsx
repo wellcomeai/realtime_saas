@@ -32,51 +32,51 @@ export function Hero() {
       {/* Drifting gradient orbs */}
       <motion.div
         aria-hidden
-        animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+        animate={{ x: [0, 40, 0], y: [0, -25, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: 'absolute',
-          width: '400px',
-          height: '400px',
+          width: '520px',
+          height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,102,255,0.12) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          top: '-100px',
-          left: '10%',
+          background: 'radial-gradient(circle, rgba(0,102,255,0.38) 0%, rgba(0,102,255,0.12) 40%, transparent 70%)',
+          filter: 'blur(50px)',
+          top: '-140px',
+          left: '6%',
           zIndex: 0,
           pointerEvents: 'none',
         }}
       />
       <motion.div
         aria-hidden
-        animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+        animate={{ x: [0, -50, 0], y: [0, 35, 0] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: 'absolute',
-          width: '460px',
-          height: '460px',
+          width: '580px',
+          height: '580px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
-          filter: 'blur(70px)',
-          top: '0px',
-          right: '5%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.34) 0%, rgba(139,92,246,0.1) 45%, transparent 70%)',
+          filter: 'blur(55px)',
+          top: '-40px',
+          right: '0%',
           zIndex: 0,
           pointerEvents: 'none',
         }}
       />
       <motion.div
         aria-hidden
-        animate={{ x: [0, 20, -20, 0], y: [0, -10, 10, 0] }}
+        animate={{ x: [0, 30, -30, 0], y: [0, -15, 15, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: 'absolute',
-          width: '380px',
-          height: '380px',
+          width: '480px',
+          height: '480px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,179,237,0.14) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          bottom: '-80px',
-          left: '40%',
+          background: 'radial-gradient(circle, rgba(99,179,237,0.4) 0%, rgba(99,179,237,0.12) 40%, transparent 70%)',
+          filter: 'blur(55px)',
+          bottom: '-120px',
+          left: '38%',
           zIndex: 0,
           pointerEvents: 'none',
         }}
