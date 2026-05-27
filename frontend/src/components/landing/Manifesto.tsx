@@ -18,8 +18,8 @@ export function ManifestoSection() {
       style={{
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(180deg, #ffffff 0%, #e8f0ff 40%, #c7d9ff 100%)',
-        padding: '160px 0',
+        background: 'linear-gradient(180deg, #ffffff 0%, #e8f0ff 35%, #c7d9ff 75%, #b3ccff 100%)',
+        padding: '160px 0 200px',
       }}
     >
       {/* Parallax orb */}

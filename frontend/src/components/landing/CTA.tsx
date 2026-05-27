@@ -9,8 +9,9 @@ export function CTA() {
       style={{
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(180deg, #c7d9ff 0%, #4a90e2 30%, #1a5fd4 60%, #0a3fa8 100%)',
-        padding: 'clamp(100px, 14vw, 160px) 24px',
+        background: 'linear-gradient(180deg, #b3ccff 0%, #8eb3f0 18%, #4a90e2 45%, #1a5fd4 72%, #0a3fa8 100%)',
+        padding: 'clamp(140px, 16vw, 200px) 24px clamp(100px, 14vw, 160px)',
+        marginTop: '-1px',
         textAlign: 'center',
       }}
     >
@@ -19,12 +20,12 @@ export function CTA() {
         aria-hidden
         style={{
           position: 'absolute',
-          top: '10%',
-          left: '15%',
+          top: '28%',
+          left: '12%',
           width: '440px',
           height: '440px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.16) 0%, transparent 70%)',
           filter: 'blur(70px)',
           pointerEvents: 'none',
         }}
