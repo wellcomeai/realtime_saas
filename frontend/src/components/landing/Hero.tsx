@@ -29,11 +29,9 @@ export function Hero() {
       {/* Mesh background */}
       <div className="absolute inset-0 mesh-bg" style={{ zIndex: 0 }} />
 
-      {/* Drifting gradient orbs */}
-      <motion.div
+      {/* Static gradient orbs (paint once, no scroll jank) */}
+      <div
         aria-hidden
-        animate={{ x: [0, 40, 0], y: [0, -25, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: 'absolute',
           width: '520px',
@@ -47,10 +45,8 @@ export function Hero() {
           pointerEvents: 'none',
         }}
       />
-      <motion.div
+      <div
         aria-hidden
-        animate={{ x: [0, -50, 0], y: [0, 35, 0] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: 'absolute',
           width: '580px',
@@ -64,10 +60,8 @@ export function Hero() {
           pointerEvents: 'none',
         }}
       />
-      <motion.div
+      <div
         aria-hidden
-        animate={{ x: [0, 30, -30, 0], y: [0, -15, 15, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         style={{
           position: 'absolute',
           width: '480px',
@@ -181,13 +175,13 @@ export function Hero() {
 
         {/* Dashboard preview */}
         <motion.div
-          custom={0.5}
+          custom={0.3}
           variants={itemVariants}
           initial="hidden"
           animate="visible"
         >
           <div
-            className="animate-float-gentle mx-auto"
+            className="mx-auto"
             style={{
               borderRadius: '20px',
               border: '1px solid rgba(0,0,0,0.08)',
@@ -195,7 +189,6 @@ export function Hero() {
               overflow: 'hidden',
               background: '#fafafa',
               maxWidth: '860px',
-              willChange: 'transform',
             }}
           >
             {/* Browser chrome */}
