@@ -89,6 +89,22 @@ export function Hero() {
         }}
       />
 
+      {/* Bottom fade to white — seamless transition to next section */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: '260px',
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 55%, #ffffff 100%)',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+
       <div
         className="relative mx-auto text-center px-6"
         style={{ maxWidth: '900px', zIndex: 1 }}

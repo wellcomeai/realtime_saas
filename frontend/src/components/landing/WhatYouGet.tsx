@@ -24,7 +24,11 @@ export function WhatYouGet() {
   return (
     <section
       id="what-you-get"
-      style={{ background: "#ffffff", padding: "120px 0" }}
+      style={{
+        background: "#ffffff",
+        padding: "120px 0",
+        marginTop: "-1px",
+      }}
     >
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px" }}>
         {/* Header */}
