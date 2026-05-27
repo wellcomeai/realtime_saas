@@ -65,14 +65,14 @@ export function WhatCanCreate() {
         aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '-150px',
+          top: '-350px',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '500px',
           height: '500px',
           borderRadius: '50%',
           background: 'rgba(0,102,255,0.06)',
-          filter: 'blur(70px)',
+          filter: 'blur(90px)',
           pointerEvents: 'none',
           zIndex: 0,
         }}

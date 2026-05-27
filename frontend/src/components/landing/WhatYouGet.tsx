@@ -51,13 +51,13 @@ export function WhatYouGet() {
         aria-hidden="true"
         style={{
           position: "absolute",
-          bottom: "-80px",
-          left: "-100px",
+          bottom: "-220px",
+          left: "-180px",
           width: "320px",
           height: "320px",
           borderRadius: "50%",
           background: "rgba(139,92,246,0.04)",
-          filter: "blur(50px)",
+          filter: "blur(70px)",
           pointerEvents: "none",
           zIndex: 0,
         }}
