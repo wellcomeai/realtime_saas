@@ -2,24 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Github } from "lucide-react";
 
 const columns = [
   {
     title: 'Продукт',
     links: [
-      { label: 'Возможности', href: '/#features' },
-      { label: 'AI-агенты', href: '/#ai-agents' },
+      { label: 'Что внутри', href: '/#what-you-get' },
+      { label: 'AI', href: '/#ai-agents' },
       { label: 'Как начать', href: '/#how-to-start' },
-      { label: 'Тарифы', href: '/pricing' },
-    ],
-  },
-  {
-    title: 'Open Source',
-    links: [
-      { label: 'GitHub', href: 'https://github.com' },
-      { label: 'Документация', href: '/docs' },
-      { label: 'Changelog', href: '/changelog' },
     ],
   },
   {
@@ -29,15 +19,22 @@ const columns = [
       { label: 'Регистрация', href: '/register' },
     ],
   },
+  {
+    title: 'Контакты',
+    links: [
+      { label: 'Автор шаблона', href: 'https://t.me/wellcome_ai' },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
     <footer
       style={{
-        background: '#f5f5f7',
-        borderTop: '1px solid rgba(0,0,0,0.06)',
+        background: 'linear-gradient(180deg, #0a3fa8 0%, #072f82 60%, #051f5e 100%)',
+        color: 'white',
         padding: '64px 0 32px',
+        marginTop: '-1px',
       }}
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
@@ -55,25 +52,16 @@ export function Footer() {
                 style={{
                   fontWeight: 600,
                   fontSize: '17px',
-                  color: '#171717',
+                  color: 'white',
                   letterSpacing: '-0.01em',
                 }}
               >
                 OpenSaaS
               </span>
             </Link>
-            <p style={{ fontSize: '14px', color: '#8e8e93', lineHeight: '1.6' }}>
-              Open-source SaaS шаблон на FastAPI + Next.js.
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.65)', lineHeight: '1.6' }}>
+              Готовая платформа для запуска онлайн-сервиса. Шаблон + 5 видеоуроков.
             </p>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-4 text-[13px] text-[#616161] no-underline bg-white border border-black/10 rounded-lg px-3 py-1.5 transition-colors duration-200 hover:border-[#0066FF]"
-            >
-              <Github size={14} />
-              ★ GitHub
-            </a>
           </div>
 
           {/* Columns */}
@@ -83,7 +71,7 @@ export function Footer() {
                 style={{
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#171717',
+                  color: 'white',
                   marginBottom: '12px',
                   letterSpacing: '-0.01em',
                 }}
@@ -95,7 +83,7 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-[#8e8e93] no-underline transition-colors duration-150 hover:text-[#171717]"
+                      className="text-sm text-white/65 no-underline transition-colors duration-150 hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -109,7 +97,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div
           style={{
-            borderTop: '1px solid rgba(0,0,0,0.06)',
+            borderTop: '1px solid rgba(255,255,255,0.12)',
             paddingTop: '24px',
             display: 'flex',
             alignItems: 'center',
@@ -118,27 +106,9 @@ export function Footer() {
             gap: '12px',
           }}
         >
-          <span style={{ fontSize: '13px', color: '#8e8e93' }}>
-            © {new Date().getFullYear()} OpenSaaS. MIT License.
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+            © {new Date().getFullYear()} OpenSaaS. Все права защищены.
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                color: '#8e8e93',
-                textDecoration: 'none',
-              }}
-            >
-              <Github size={14} />
-              MIT License
-            </a>
-          </div>
         </div>
       </div>
     </footer>
